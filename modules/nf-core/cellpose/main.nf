@@ -11,6 +11,7 @@ process CELLPOSE {
     output:
     tuple val(meta), path("*masks.tif") ,   emit: mask
     tuple val(meta), path("*flows.tif") ,   emit: flows, optional: true
+    tuple val(meta), path("*seg.npy")   ,   emit: cells, optional: true
     path "versions.yml"                 ,   emit: versions
 
     when:
