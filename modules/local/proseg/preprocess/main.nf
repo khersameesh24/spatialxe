@@ -5,12 +5,13 @@ process PROSEG2BAYSOR {
     container "nf-core/proseg:1.1.8"
 
     input:
+    tuple val(meta), path(cell_polygons)
     path(transcript_metadata)
-    path(cell_polygons)
 
     output:
     path("xr-transcript-metadata.csv"), emit: xr_metadata
     path("xr-cell-polygons.geojson"), emit: xr_polygons
+    path("versions.yml"), emit: versions
 
     script:
     // Exit if running this module with -profile conda / -profile mamba
