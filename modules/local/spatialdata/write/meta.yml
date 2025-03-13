@@ -14,7 +14,7 @@ input:
       type: map
       description: |
         Groovy Map containing sample information
-        e.g. [ id:'test' ]
+        e.g. [ id:'sample' ]
   - versions:
       type: file
       description: YML file containing software versions
@@ -25,7 +25,7 @@ input:
         Path to spatialomics data bundle (e.g., from Xeniumranger)
 
 output:
-  - yml:
+  - spatialdata:
       type: folder
       description: Spatialdata folder
       pattern: "${meta.id}/spatialdata/*"

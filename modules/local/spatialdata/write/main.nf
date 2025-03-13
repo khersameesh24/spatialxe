@@ -1,4 +1,5 @@
 process SPATIALDATA_WRITE {
+    tag "$meta.id"
     label 'process_high'
 
     container "ghcr.io/scverse/spatialdata:spatialdata0.3.0_spatialdata-io0.1.7_spatialdata-plot0.2.9"
@@ -12,7 +13,7 @@ process SPATIALDATA_WRITE {
     tuple val(meta), path(bundle, stageAs: "*")
 
     output:
-    tuple val(meta), path("${meta.id}/spatialdata/**"), emit: spatialdata
+    tuple val(meta), path("spatialdata/**")           , emit: spatialdata
     path "versions.yml"                               , emit: versions
 
     when:
@@ -24,8 +25,8 @@ process SPATIALDATA_WRITE {
 
     stub:
     """
-    mkdir -p "${meta.id}/spatialdata/"
-    touch ${meta.id}/spatialdata/fake_file.txt
+    mkdir -p "spatialdata/"
+    touch spatialdata/fake_file.txt
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

@@ -12,7 +12,7 @@ def main():
     print("[START]")
 
     input_path = "${bundle}"
-    output_path = "${meta.id}"
+    output_path = "."
 
     format = "${params.format}"
 
