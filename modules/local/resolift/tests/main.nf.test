@@ -9,15 +9,28 @@ nextflow_process {
     tag "resolift"
     tag "segmentation"
     tag "cell_segmentation"
+    tag "unzip"
+    config "./nextflow.config"
 
+    setup {
 
-    test("resolift") {
+            run("UNZIP") {
+                script "modules/nf-core/unzip/main.nf"
+                process {
+                    """
+                    input[0] = [[id: "test_run"], file('https://raw.githubusercontent.com/nf-core/test-datasets/spatialxe/Xenium_Prime_Mouse_Ileum_tiny_outs.zip', checkIfExists: true)]
+                    """
+                }
+            }
+    }
+
+    test("resolift main") {
 
         when {
             process {
                 """
-                input[0] = Channel.of([
-                            [id: "test_run"], ["/workspace/spatialxe/modules/local/resolift/tests/morphology.ome.tif"]])
+                input[0] = Channel.of(
+                            [id: "test_run"]).combine(UNZIP.out.unzipped_archive.map { it[1] } + "/morphology_focus/morphology_focus_0000.ome.tif")
                 """
             }
         }
@@ -38,8 +51,8 @@ nextflow_process {
         when {
             process {
                 """
-                input[0] = Channel.of([
-                            [id: "test_run"], ["/workspace/spatialxe/modules/local/resolift/tests/morphology.ome.tif"]])
+                input[0] = Channel.of(
+                            [id: "test_run"]).combine(UNZIP.out.unzipped_archive.map { it[1] } + "/morphology_focus/morphology_focus_0000.ome.tif")
                 """
             }
         }
