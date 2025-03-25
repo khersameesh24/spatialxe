@@ -2,7 +2,7 @@ process RESOLIFT {
     tag "$meta.id"
     label 'process_medium'
 
-    container "quay.io/kubranarci/resolift_1.0.0"
+    container "quay.io/khersameesh24/resolift:1.0.0"
 
     input:
     tuple val(meta), path(input)
