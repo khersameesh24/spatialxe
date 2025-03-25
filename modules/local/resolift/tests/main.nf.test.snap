@@ -1,0 +1,68 @@
+{
+    "resolift stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test_run"
+                        },
+                        "test_run.tiff:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    "versions.yml:md5,e2a649848a8b90aecf354b1478c05450"
+                ],
+                "output": [
+                    [
+                        {
+                            "id": "test_run"
+                        },
+                        "test_run.tiff:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,e2a649848a8b90aecf354b1478c05450"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.10.4"
+        },
+        "timestamp": "2025-03-25T14:01:33.514677254"
+    },
+    "resolift": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test_run"
+                        },
+                        "test_run.tiff:md5,f24897797c7171bbe216c99a97eb8a5d"
+                    ]
+                ],
+                "1": [
+                    "versions.yml:md5,e2a649848a8b90aecf354b1478c05450"
+                ],
+                "output": [
+                    [
+                        {
+                            "id": "test_run"
+                        },
+                        "test_run.tiff:md5,f24897797c7171bbe216c99a97eb8a5d"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,e2a649848a8b90aecf354b1478c05450"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.10.4"
+        },
+        "timestamp": "2025-03-25T14:00:59.165947559"
+    }
+}

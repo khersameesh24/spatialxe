@@ -1,0 +1,56 @@
+nextflow_process {
+
+    name "Test Process RESOLIFT"
+    script "../main.nf"
+    process "RESOLIFT"
+
+    tag "modules"
+    tag "modules_local"
+    tag "resolift"
+    tag "segmentation"
+    tag "cell_segmentation"
+
+
+    test("resolift") {
+
+        when {
+            process {
+                """
+                input[0] = Channel.of([
+                            [id: "test_run"], ["/workspace/spatialxe/modules/local/resolift/tests/morphology.ome.tif"]])
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() },
+            )
+        }
+
+    }
+
+    test("resolift stub") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = Channel.of([
+                            [id: "test_run"], ["/workspace/spatialxe/modules/local/resolift/tests/morphology.ome.tif"]])
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+
+    }
+
+}
