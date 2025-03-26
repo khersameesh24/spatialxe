@@ -40,12 +40,12 @@ class BOMS():
             transcripts_df = pd.read_csv(transcripts_path,
                                         compression='gzip',
                                         usecols = [x_cord, y_cord, gene_col],
-                                        chunksize=chunksize
+                                        nrows = 1000
             )
 
-            x_ndarray: np.ndarray = pd.Series(transcripts_df[x_cord]).to_numpy()
-            y_ndarray: np.ndarray = pd.Series(transcripts_df[y_cord]).to_numpy()
-            labels: np.ndarray = pd.Series(transcripts_df[gene_col]).to_numpy()
+            x_ndarray: np.ndarray = np.array(pd.Series(transcripts_df[x_cord]))
+            y_ndarray: np.ndarray = np.array(pd.Series(transcripts_df[y_cord]))
+            labels: np.ndarray = np.array(pd.Series(transcripts_df[gene_col]))
 
             return x_ndarray, y_ndarray, labels
         else:
@@ -173,4 +173,5 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    BOMS.run_segmentation(run_id=args.run_id, transcripts_path=args.transcripts)
+    boms_executor = BOMS()
+    boms_executor.run_segmentation(run_id=args.run_id, transcripts_path=args.transcripts)

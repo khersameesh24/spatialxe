@@ -2,10 +2,7 @@ process BOMS {
     tag "$meta.id"
     label 'process_high'
 
-    conda "${moduleDir}/environment.yml"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/boms:1.1.0--py312h9c9b0c2_2':
-        'biocontainers/boms:1.1.0--py312h9c9b0c2_2' }"
+    container "khersameesh24/boms:1.1.0"
 
     input:
     tuple val(meta), path(transcripts)
@@ -22,6 +19,10 @@ process BOMS {
     task.ext.when == null || task.ext.when
 
     script:
+    // Exit if running this module with -profile conda / -profile mamba
+    if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
+        error "BOMS module does not support Conda. Please use Docker / Singularity / Podman instead."
+    }
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     def VERSION = "1.1.0"
@@ -35,6 +36,10 @@ process BOMS {
     """
 
     stub:
+    // Exit if running this module with -profile conda / -profile mamba
+    if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
+        error "BOMS module does not support Conda. Please use Docker / Singularity / Podman instead."
+    }
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
 
