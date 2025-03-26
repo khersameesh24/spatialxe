@@ -1,0 +1,176 @@
+#!/usr/bin/env python
+
+
+import h5py
+import argparse
+import numpy as np
+import pandas as pd
+from typing import Tuple
+from pathlib import Path
+from boms import run_boms
+
+
+class BOMS():
+    def __init__(self) -> None:
+        self.epochs = 30
+        self.spatial_bandwidth = 10
+        self.range_bandwidth = 0.3
+        self.nearest_neighbours = 30
+
+    @staticmethod
+    def _read_transcript(
+            transcripts_path: Path,
+            x_cord:str='x_location',
+            y_cord:str='y_location',
+            gene_col:str='feature_name',
+            chunksize=100000
+        ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """
+        Reads the transcript.csv.gz from the xenium bundle
+        into a DataFrame and extracts coordinates and labels
+        Args:
+            transcripts (path): Path to the transcripts.csv.gz
+            x_cord (str): name of the column containing the x coordinates
+            y_cord (str): name of the column containing the y coordinates
+            gene_col (str): name of the column containing the labels (features)
+        Returns:
+            pd.Series, pd.Series, pd.Series: Extracted x, y coordinates and labels.
+        """
+        if Path(transcripts_path).exists():
+            transcripts_df = pd.read_csv(transcripts_path,
+                                        compression='gzip',
+                                        usecols = [x_cord, y_cord, gene_col],
+                                        chunksize=chunksize
+            )
+
+            x_ndarray: np.ndarray = pd.Series(transcripts_df[x_cord]).to_numpy()
+            y_ndarray: np.ndarray = pd.Series(transcripts_df[y_cord]).to_numpy()
+            labels: np.ndarray = pd.Series(transcripts_df[gene_col]).to_numpy()
+
+            return x_ndarray, y_ndarray, labels
+        else:
+            raise FileExistsError(f"{transcripts_path} not found. Check if it exists.")
+
+    @staticmethod
+    def _generate_segmentation_outs(
+            final_segmentation: np.array,
+            filename: str = "boms_segmentation_out",
+            run_id: str = ""
+        ) -> None:
+        """
+        Generates a .npy file from the segmentation results
+        generated with BOMS run. Converts the numpy array to
+        be saved as a .npy file
+        Args:
+        final_segmentation(np.array): segmentation array from BOMS run
+        filename(str): name of the .npy file to be saved
+        run_id(str): specific name for the BOMS run
+        """
+        if run_id:
+            filename = f"{run_id}_{filename}"
+        np.save(f"{filename}.npy", final_segmentation)
+        print(f"Saved segmentation results to {filename} with shape {final_segmentation.shape}")
+
+        return None
+
+
+    @staticmethod
+    def _generate_counts_outs(
+        count_matrix: np.array,
+        filename: str = "boms_counts_out",
+        chunk_size: None = None,
+        compression: str = "gzip",
+        run_id: str = ""
+    ) -> None:
+        """
+        Generates a .h5 file from the counts matrix generated with
+        BOMS run. Converts the numpy array to
+        be saved as a .h5 file
+        Args:
+        count_matrix(np.array): counts matrix from the BOMS run
+        filename(str): name of the .h5 file to be saved
+        run_id(str): specific name for the BOMS run
+        """
+        if run_id:
+            filename = f"{run_id}_{filename}.h5"
+
+        with h5py.File(filename, "w") as h5f:
+            if chunk_size is None:
+                # Auto-determine a reasonable chunk size (e.g., slicing along first axis)
+                chunk_size = (min(1000, count_matrix.shape[0]),) + count_matrix.shape[1:]
+
+            h5f.create_dataset(
+                run_id,
+                data=count_matrix,
+                compression=compression,
+                chunks=chunk_size
+            )
+        print(f"Saved counts matrix to {filename} with shape {count_matrix.shape}")
+
+        return None
+
+
+    @staticmethod
+    def _generate_run_outs(
+            outs_array: np.array,
+            filename: str = "",
+            run_id: str = ""
+        ) -> None:
+        """
+        Generates a .npy file from arrays
+        generated with BOMS run. Converts the numpy array to
+        be saved as a .npy file
+        Args:
+        outs_array(np.array): segmentation array from BOMS run
+        filename(str): name of the .npy file to be saved
+        run_id(str): specific name for the BOMS run
+        """
+        if run_id:
+            filename = f"{run_id}_{filename}"
+        np.save(f"{filename}.npy", outs_array)
+        print(f"Saved BOMS run results to {filename} with shape {outs_array.shape}")
+
+        return None
+
+
+    def run_segmentation(self, transcripts_path, run_id) -> None:
+        """
+        Runs the BOMS segmentation method on the transcripts provided
+        Args:
+            transcripts_path(Path): path to the transcripts.csv.gz
+            run_id(str): specific name for the BOMS run
+        """
+        # read transcripts file
+        x_ndarray, x_ndarray, labels = BOMS._read_transcript(transcripts_path=transcripts_path)
+
+        # run segmentation
+        modes, segmentation, count_matrix, cell_locations, coordinates = run_boms(
+            x_ndarray, x_ndarray, labels, epochs=self.epochs, h_s=self.spatial_bandwidth, h_r=self.range_bandwidth, K=self.nearest_neighbours)
+
+        # generate segmentation output
+        BOMS._generate_segmentation_outs(final_segmentation=segmentation, run_id=run_id)
+
+        # generate count matrix output
+        BOMS._generate_counts_outs(count_matrix=count_matrix, run_id=run_id)
+
+        # generate cell location output
+        BOMS._generate_run_outs(outs_array=cell_locations, filename="boms_cell_locations", run_id=run_id)
+
+        # generate modes output
+        BOMS._generate_run_outs(outs_array=modes, filename="boms_modes", run_id=run_id)
+
+        # generate coordinate output
+        BOMS._generate_run_outs(outs_array=coordinates, filename="boms_coordinates", run_id=run_id)
+
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Run the BOMS Segmentation method on the transcripts from Xenium bundle")
+
+    # Required arguments
+    parser.add_argument("transcripts", required=True, type=str, help="Path to the transcripts.csv.gz from xenium bundle")
+    parser.add_argument("run_id", required=True, type=str, help="A specific name to identify the BOMS run")
+
+    args = parser.parse_args()
+
+    BOMS.run_segmentation(run_id=args.run_id, transcripts_path=args.transcripts)
