@@ -15,7 +15,37 @@ class BOMS():
         self.epochs = 30
         self.spatial_bandwidth = 10
         self.range_bandwidth = 0.3
-        self.nearest_neighbours = 30
+        self.nearest_neighbors = 30
+
+    def run_segmentation(self, transcripts_path, run_id) -> None:
+        """
+        Runs the BOMS segmentation method on the transcripts provided
+        Args:
+            transcripts_path(Path): path to the transcripts.csv.gz
+            run_id(str): specific name for the BOMS run
+        """
+        # read transcripts file
+        x_ndarray, y_ndarray, labels = BOMS._read_transcript(transcripts_path=transcripts_path)
+
+        # run segmentation
+        modes, segmentation, count_matrix, cell_locations, coordinates = run_boms(
+            x_ndarray, y_ndarray, labels, epochs=self.epochs, h_s=self.spatial_bandwidth, h_r=self.range_bandwidth, K=self.nearest_neighbors)
+
+        # generate segmentation output
+        BOMS._generate_segmentation_outs(final_segmentation=segmentation, run_id=run_id)
+
+        # generate count matrix output
+        BOMS._generate_counts_outs(count_matrix=count_matrix, run_id=run_id)
+
+        # generate cell location output
+        BOMS._generate_run_outs(outs_array=cell_locations, filename="boms_cell_locations", run_id=run_id)
+
+        # generate modes output
+        BOMS._generate_run_outs(outs_array=modes, filename="boms_modes", run_id=run_id)
+
+        # generate coordinate output
+        BOMS._generate_run_outs(outs_array=coordinates, filename="boms_coordinates", run_id=run_id)
+
 
     @staticmethod
     def _read_transcript(
@@ -23,7 +53,6 @@ class BOMS():
             x_cord:str='x_location',
             y_cord:str='y_location',
             gene_col:str='feature_name',
-            chunksize=100000
         ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Reads the transcript.csv.gz from the xenium bundle
@@ -40,7 +69,6 @@ class BOMS():
             transcripts_df = pd.read_csv(transcripts_path,
                                         compression='gzip',
                                         usecols = [x_cord, y_cord, gene_col],
-                                        nrows = 1000
             )
 
             x_ndarray: np.ndarray = np.array(pd.Series(transcripts_df[x_cord]))
@@ -133,43 +161,13 @@ class BOMS():
         return None
 
 
-    def run_segmentation(self, transcripts_path, run_id) -> None:
-        """
-        Runs the BOMS segmentation method on the transcripts provided
-        Args:
-            transcripts_path(Path): path to the transcripts.csv.gz
-            run_id(str): specific name for the BOMS run
-        """
-        # read transcripts file
-        x_ndarray, x_ndarray, labels = BOMS._read_transcript(transcripts_path=transcripts_path)
-
-        # run segmentation
-        modes, segmentation, count_matrix, cell_locations, coordinates = run_boms(
-            x_ndarray, x_ndarray, labels, epochs=self.epochs, h_s=self.spatial_bandwidth, h_r=self.range_bandwidth, K=self.nearest_neighbours)
-
-        # generate segmentation output
-        BOMS._generate_segmentation_outs(final_segmentation=segmentation, run_id=run_id)
-
-        # generate count matrix output
-        BOMS._generate_counts_outs(count_matrix=count_matrix, run_id=run_id)
-
-        # generate cell location output
-        BOMS._generate_run_outs(outs_array=cell_locations, filename="boms_cell_locations", run_id=run_id)
-
-        # generate modes output
-        BOMS._generate_run_outs(outs_array=modes, filename="boms_modes", run_id=run_id)
-
-        # generate coordinate output
-        BOMS._generate_run_outs(outs_array=coordinates, filename="boms_coordinates", run_id=run_id)
-
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run the BOMS Segmentation method on the transcripts from Xenium bundle")
 
     # Required arguments
-    parser.add_argument("transcripts", required=True, type=str, help="Path to the transcripts.csv.gz from xenium bundle")
-    parser.add_argument("run_id", required=True, type=str, help="A specific name to identify the BOMS run")
+    parser.add_argument("--transcripts", "-t", required=True, type=str, help="Path to the transcripts.csv.gz from xenium bundle")
+    parser.add_argument("--run_id", "-i", required=True, type=str, help="A specific name to identify the BOMS run")
 
     args = parser.parse_args()
 
