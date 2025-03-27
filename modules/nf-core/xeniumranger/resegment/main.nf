@@ -2,7 +2,7 @@ process XENIUMRANGER_RESEGMENT {
     tag "$meta.id"
     label 'process_high'
 
-    container "nf-core/xeniumranger:3.0.1"
+    container "nf-core/xeniumranger:3.1.1"
 
     input:
     tuple val(meta), path(xenium_bundle)
