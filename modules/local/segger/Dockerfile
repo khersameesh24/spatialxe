@@ -36,6 +36,13 @@ RUN git clone https://github.com/EliHei2/segger_dev.git /workspace/segger_dev &&
 # Set the environment variable NUMBA_CACHE_DIR
 ENV NUMBA_CACHE_DIR '/tmp'
 
+# Create a non-root user for security
+RUN useradd --create-home seggeruser
+USER seggeruser
+
+# Set a writable CuPy cache directory
+ENV CUPY_CACHE_DIR='/tmp/cupy_cache'
+
 # Set environment variables
 ENV PYTHONPATH=/workspace/segger_dev/src:$PYTHONPATH
 
