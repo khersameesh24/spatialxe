@@ -9,7 +9,7 @@ process SEGGER_TRAIN {
 
     output:
     tuple val(meta), path("${meta.id}_trained_models")   , emit: trained_models
-    path("versions.yml")                                    , emit: versions
+    path("versions.yml")                                 , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
