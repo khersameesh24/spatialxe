@@ -11,8 +11,9 @@ process SEGGER_PREDICT {
 
 
     output:
-    tuple val(meta), path("${meta.id}_benchmarks_dir")   , emit: benchmarks
-    path("versions.yml")                                    , emit: versions
+    tuple val(meta), path("${meta.id}_benchmarks_dir")                                  , emit: benchmarks
+    tuple val(meta), path("${meta.id}_benchmarks_dir/*/segger_transcripts.parquet")     , emit: transcripts
+    path("versions.yml")                                                                , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -26,7 +27,7 @@ process SEGGER_PREDICT {
     def prefix = task.ext.prefix ?: "${meta.id}"
     def script_path = "${task.cli_dir}" + "/predict_fast.py"
     """
-    export CUPY_CACHE_DIR=/home/f641l/temp_z/projects/tmp_data/torch_dump/
+    export CUPY_CACHE_DIR='/tmp/cupy_cache'
 
     python3 ${script_path} \\
         --models_dir ${models_dir} \\
