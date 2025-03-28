@@ -1,8 +1,8 @@
 process SPATIALDATA_WRITE {
     tag "$meta.id"
-    label 'process_high'
+    label 'process_low'
 
-    container "ghcr.io/scverse/spatialdata:spatialdata0.3.0_spatialdata-io0.1.7_spatialdata-plot0.2.9"
+    container "heylf/spatialdata:0.2.6"
 
     // Exit if running this module with -profile conda / -profile mamba
     if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
@@ -11,17 +11,18 @@ process SPATIALDATA_WRITE {
 
     input:
     tuple val(meta), path(bundle, stageAs: "*")
+    val(outputfolder)
 
     output:
-    tuple val(meta), path("spatialdata/**")           , emit: spatialdata
-    path "versions.yml"                               , emit: versions
+    tuple val(meta), path("${outputfolder}")    , emit: spatialdata
+    path "versions.yml"                         , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''
-    template 'spatialdatawrite.py'
+    template 'write.py'
 
     stub:
     """

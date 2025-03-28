@@ -7,12 +7,11 @@ import spatialdata
 from spatialdata_io import xenium
 
 def main():
-    """Write spatialdata object folder."""
-
     print("[START]")
 
     input_path = "${bundle}"
     output_path = "."
+    outputfolder = "${outputfolder}"
 
     format = "${params.format}"
 
@@ -27,7 +26,7 @@ def main():
             n_jobs="${task.cpus}",
         )
         print(sd_xenium_obj)
-        sd_xenium_obj.write(f"{output_path}/spatialdata")
+        sd_xenium_obj.write(f"{output_path}/{outputfolder}")
     else:
         sys.exit("[ERROR] Format not found")
 
