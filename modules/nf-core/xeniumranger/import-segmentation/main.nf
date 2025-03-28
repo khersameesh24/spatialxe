@@ -15,8 +15,8 @@ process XENIUMRANGER_IMPORT_SEGMENTATION {
     val(units)
 
     output:
-    tuple val(meta), path("**/outs/**"), emit: outs
-    path "versions.yml", emit: versions
+    tuple val(meta), path("${meta.id}/outs")    , emit: bundle
+    path "versions.yml"                         , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
