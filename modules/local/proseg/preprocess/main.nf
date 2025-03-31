@@ -2,7 +2,7 @@ process PROSEG2BAYSOR {
     tag "$meta.id"
     label 'process_high'
 
-    container "nf-core/proseg:1.1.8"
+    container "khersameesh24/proseg:2.0.0"
 
     input:
     tuple val(meta), path(cell_polygons)
