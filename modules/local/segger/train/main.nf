@@ -24,7 +24,7 @@ process SEGGER_TRAIN {
     def script_path = "${task.cli_dir}" + "/train_model.py"
     """
 
-    TORCH_DISTRIBUTED_DEBUG=INFO python3 ${script_path} \\
+    python3 ${script_path} \\
         --dataset_dir ${dataset_dir} \\
         --models_dir ${meta.id}_trained_models \\
         --sample_tag ${meta.id} \\
