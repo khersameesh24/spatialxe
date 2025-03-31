@@ -3,12 +3,48 @@
     IMPORT MODULES / SUBWORKFLOWS / FUNCTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-include { FASTQC                 } from '../modules/nf-core/fastqc/main'
+
+// multiqc
 include { MULTIQC                } from '../modules/nf-core/multiqc/main'
 include { paramsSummaryMap       } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
+
+// nf-core functionality
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_spatialxe_pipeline'
+include { fromSamplesheet           } from 'plugin/nf-validation'
+
+// nf-core processes
+
+// spatialxe utility modules
+include { GUNZIP } from '../modules/nf-core/gunzip/main'
+
+// local processes
+include { SPATIALDATA_WRITE as SPATIALDATA_WRITE_RAW } from '../modules/local/spatialdata/write/main'
+include { SPATIALDATA_WRITE as SPATIALDATA_WRITE_RESEGMENT } from '../modules/local/spatialdata/write/main'
+include { SPATIALDATA_MERGE } from '../modules/local/spatialdata/merge/main'
+include { SPATIALDATA_META } from '../modules/local/spatialdata/meta/main'
+
+// segmentation processes
+include { CELLPOSE } from '../modules/nf-core/cellpose/main'
+
+include { PROSEG } from '../modules/local/proseg/main'
+include { PROSEG2BAYSOR } from '../modules/local/proseg/preprocess/main'
+
+include { FICTURE_PREPROCESS } from '../modules/local/ficture/preprocess/main'
+include { FICTURE } from '../modules/local/ficture/model/main'
+
+include { XENIUMRANGER_IMPORT_SEGMENTATION } from '../modules/nf-core/xeniumranger/import-segmentation/main'
+
+include { BAYSOR_RUN } from '../modules/local/baysor/run/main'
+include { BAYSOR_SEGFREE } from '../modules/local/baysor/segfree/main'
+include { BAYSOR_PREVIEW } from '../modules/local/baysor/preview/main'
+
+include { SEGGER_CREATE_DATASET } from '../modules/local/segger/create_dataset/main'
+include { SEGGER_TRAIN } from '../modules/local/segger/train/main'
+include { SEGGER_PREDICT } from '../modules/local/segger/predict/main'
+
+include { PARQUET_TO_CSV } from '../modules/local/spatialconverter/parquet_to_csv/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -24,14 +60,266 @@ workflow SPATIALXE {
 
     ch_versions = Channel.empty()
     ch_multiqc_files = Channel.empty()
-    //
-    // MODULE: Run FastQC
-    //
-    FASTQC (
-        ch_samplesheet
+    ch_segmentation_mask = Channel.empty()
+
+    ch_samplesheet.view()
+
+    // Start subworkflow with segmentation (+- refinement)
+
+    // Start subworkflow without segmentation
+
+    // Just run xeniumranger parts (+- refinemnet)
+
+    // Just do QC
+    ch_bundle = ch_samplesheet.map {
+        meta, bundle, image -> return [ meta, bundle ]
+    }
+
+    ch_transcripts = ch_samplesheet.map {
+        meta, bundle, image -> return [ meta, bundle + "/transcripts.csv.gz" ]
+    }
+
+    ch_transcripts_parquet = ch_samplesheet.map {
+        meta, bundle, image -> return [ meta, bundle + "/transcripts.parquet" ]
+    }
+
+    ch_image = ch_samplesheet.map {
+            meta, bundle, image -> return [ meta, image ]
+    }
+
+    SPATIALDATA_WRITE_RAW( 
+        ch_bundle,
+        'spatialdata_raw'
+     )
+    ch_versions = ch_versions.mix(SPATIALDATA_WRITE_RAW.out.versions)
+
+    if ( params.segmentation_refinement ) {
+
+        SEGGER_CREATE_DATASET(
+            ch_bundle
+        )
+        ch_versions = ch_versions.mix(SEGGER_CREATE_DATASET.out.versions)
+
+        // TODO fix GPU support
+        // FIX also CPU allocation
+        SEGGER_TRAIN(
+            SEGGER_CREATE_DATASET.out.datasetdir
+        )
+        ch_versions = ch_versions.mix(SEGGER_TRAIN.out.versions)
+
+        ch_just_segger_model = SEGGER_TRAIN.out.trained_models.map {
+                meta, models -> return [ models ]
+        }
+
+        ch_just_transcripts_parquet = ch_transcripts_parquet.map {
+                meta, transcripts -> return [ transcripts ]
+        }
+
+        ch_just_segger_model.view()
+
+        SEGGER_PREDICT(
+            SEGGER_CREATE_DATASET.out.datasetdir,
+            ch_just_segger_model,
+            ch_just_transcripts_parquet
+        )
+        ch_versions = ch_versions.mix(SEGGER_PREDICT.out.versions)
+
+        SEGGER_PREDICT.out.transcripts.view()
+
+        PARQUET_TO_CSV(
+            SEGGER_PREDICT.out.transcripts
+        )
+
+        ch_transcripts = PARQUET_TO_CSV.out.transcripts_csv
+        ch_versions = ch_versions.mix(PARQUET_TO_CSV.out.versions)
+
+    }
+
+    if ( params.segmentation in params.seg_methods ){
+
+        if ( params.segmentation == 'cellpose' ){
+
+            CELLPOSE( 
+                ch_image, 
+                [] 
+            )
+
+            ch_versions = ch_versions.mix(CELLPOSE.out.versions) 
+
+            ch_nulcleus_segmentation = CELLPOSE.out.mask.map {
+                meta, mask -> return [ mask ]
+            }
+
+            // you need the morphology_focus.tif the normal morpholly.tif might thow an error in
+            // xenium ranger import.
+            ch_cells_segmenetation = CELLPOSE.out.cells.map {
+                meta, cells -> return [ cells ]
+            }
+
+            ch_cells_segmenetation.view()
+
+            XENIUMRANGER_IMPORT_SEGMENTATION(
+                ch_bundle,
+                [],
+                [],
+                ch_nulcleus_segmentation,
+                [],
+                [],
+                [],
+                []
+            )
+            ch_versions = ch_versions.mix(XENIUMRANGER_IMPORT_SEGMENTATION.out.versions)
+
+        }
+
+        if ( params.segmentation == 'proseg' ){
+
+            PROSEG( ch_transcripts )
+            ch_versions = ch_versions.mix(PROSEG.out.versions)
+
+            PROSEG2BAYSOR(
+                PROSEG.out.cell_polygons_2d,
+                PROSEG.out.transcript_metadata
+            )
+            ch_versions = ch_versions.mix(PROSEG2BAYSOR.out.versions)
+
+            // TODO https://github.com/dcjones/proseg defines here to use --units microns, do we need to do this?
+            XENIUMRANGER_IMPORT_SEGMENTATION(
+                ch_bundle,
+                [],
+                [],
+                [],
+                [],
+                PROSEG2BAYSOR.out.xr_metadata,
+                PROSEG2BAYSOR.out.xr_polygons,
+                "microns"
+            )
+            ch_versions = ch_versions.mix(XENIUMRANGER_IMPORT_SEGMENTATION.out.versions) 
+            
+        }
+
+        if ( params.segmentation == 'baysor_segmentation' ){
+
+            GUNZIP( ch_transcripts )
+            ch_versions = ch_versions.mix(GUNZIP.out.versions) 
+
+            if ( params.baysor_rerun ){
+
+                // TODO baysor container needs julia package OMETIFF
+
+                ch_just_image = ch_image.map {
+                    meta, image -> return [ image ]
+                }
+
+                BAYSOR_RUN(
+                    GUNZIP.out.gunzip,
+                    ch_just_image,
+                    30 // TODO probably better to inroduce a parameter here
+                )
+                ch_versions = ch_versions.mix(BAYSOR_RUN.out.versions) 
+
+                ch_segmentation = BAYSOR_RUN.out.segmentation.map {
+                    meta, segmentation -> return [ segmentation ]
+                }
+
+            } else {
+                BAYSOR_RUN(
+                    GUNZIP.out.gunzip,
+                    [],
+                    30 // TODO probably better to inroduce a parameter here
+                )
+                ch_versions = ch_versions.mix(BAYSOR_RUN.out.versions) 
+
+                ch_segmentation = BAYSOR_RUN.out.segmentation.map {
+                    meta, segmentation -> return [ segmentation ]
+                }
+
+                XENIUMRANGER_IMPORT_SEGMENTATION(
+                    ch_bundle,
+                    [],
+                    [],
+                    [],
+                    [],
+                    ch_segmentation,
+                    BAYSOR_RUN.out.polygons2d,
+                    "microns"
+                )
+                ch_versions = ch_versions.mix(XENIUMRANGER_IMPORT_SEGMENTATION.out.versions) 
+            }
+
+        }
+
+    }
+
+    if ( params.segmentation in params.segfree_methods ) {
+
+
+        if ( params.segmentation == 'ficture' ) {
+
+            FICTURE_PREPROCESS (
+                ch_transcripts,
+                []
+            )
+            ch_versions = ch_versions.mix(FICTURE_PREPROCESS.out.versions) 
+
+            FICTURE_PREPROCESS.out.features.view()
+
+            ch_features = []
+            if ( params.features ){
+                ch_features = FICTURE_PREPROCESS.out.features
+            }
+
+            FICTURE(
+                FICTURE_PREPROCESS.out.transcripts,
+                FICTURE_PREPROCESS.out.coordinate_minmax,
+                ch_features
+            )
+            ch_versions = ch_versions.mix(FICTURE.out.versions) 
+
+        }
+
+        if ( params.segmentation == 'baysor_segmentation_free' ) {
+
+            GUNZIP( ch_transcripts )
+            ch_versions = ch_versions.mix(GUNZIP.out.versions) 
+
+            BAYSOR_SEGFREE(
+                GUNZIP.out.gunzip
+            )
+            ch_versions = ch_versions.mix(BAYSOR_SEGFREE.out.versions)
+
+        }
+
+    }
+
+    if ( params.segmentation == 'baysor_preview' ) {
+
+        GUNZIP( ch_transcripts )
+        ch_versions = ch_versions.mix(GUNZIP.out.versions) 
+
+        BAYSOR_PREVIEW(
+            GUNZIP.out.gunzip
+        )
+        ch_versions = ch_versions.mix(BAYSOR_PREVIEW.out.versions)
+
+    }
+
+    SPATIALDATA_WRITE_RESEGMENT(
+         XENIUMRANGER_IMPORT_SEGMENTATION.out.bundle,
+        'spatialdata_resegement'
     )
-    ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]})
-    ch_versions = ch_versions.mix(FASTQC.out.versions.first())
+    ch_versions = ch_versions.mix(SPATIALDATA_WRITE_RESEGMENT.out.versions)
+
+    SPATIALDATA_MERGE(
+        SPATIALDATA_WRITE_RAW.out.spatialdata,
+        SPATIALDATA_WRITE_RESEGMENT.out.spatialdata
+    )
+
+    SPATIALDATA_META( 
+        SPATIALDATA_MERGE.out.spatialxe_bundle,
+        ch_bundle
+    )
+    ch_versions = ch_versions.mix(SPATIALDATA_META.out.versions)
 
     //
     // Collate and save software versions

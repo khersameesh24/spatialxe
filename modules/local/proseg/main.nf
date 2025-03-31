@@ -2,7 +2,7 @@ process PROSEG {
     tag "$meta.id"
     label 'process_high'
 
-    container "nf-core/proseg:1.1.8"
+    container "khersameesh24/proseg:2.0.0"
 
     input:
     tuple val(meta), path(transcripts)
@@ -28,16 +28,15 @@ process PROSEG {
     }
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def platform = preset ? "${params.preset}" : ""
 
-    // check for preset values
-    if (!(platform in ['xenium', 'cosmx', 'merscope'])) {
-        error "${platform} is an invalid platform (preset) type. Please specify xenium, cosmx, or merscope"
+    // check for platform values
+    if ( !(params.format in ['xenium', 'cosmx', 'merscope']) ) {
+        error "${params.format} is an invalid platform type. Please specify xenium, cosmx, or merscope"
     }
 
     """
     proseg \\
-        --${preset} \\
+        --${params.format} \\
         ${transcripts} \\
         --nthreads ${task.cpus} \\
         --output-expected-counts expected-counts.csv.gz \\
