@@ -2,8 +2,7 @@ process FICTURE {
     tag "$meta.id"
     label 'process_high'
 
-    // TODO docker container on nf-core has ps error! (needs fix)
-    container "heylf/ficture:0.0.4.0"
+    container "nf-core/ficture:0.0.4.0"
 
     input:
     tuple val(meta), path(transcripts)
