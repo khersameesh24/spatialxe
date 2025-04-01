@@ -23,9 +23,7 @@ process SEGGER_CREATE_DATASET {
 
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def script_path = "${task.cli_dir}" + "/create_dataset_fast.py"
     def script_path = "${System.getenv('SEGGER_CREATE_DATASET')}"
-
 
     // check for platform values
     if ( !(params.format in ['xenium']) ) {
@@ -51,6 +49,7 @@ process SEGGER_CREATE_DATASET {
     stub:
     """
     mkdir -p segger_dataset/
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         segger: ${task.version}
