@@ -26,6 +26,9 @@ RUN python -m pip install --no-cache-dir --upgrade pip && \
 # Set working directory
 WORKDIR /workspace
 
+# Install PyTorch 2.5.1 with CUDA 12 support
+RUN pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1
+
 # Clone the repository and install segger with CUDA 12 support
 RUN git clone https://github.com/EliHei2/segger_dev.git /workspace/segger_dev && \
     pip install -e "/workspace/segger_dev[cuda12]"
