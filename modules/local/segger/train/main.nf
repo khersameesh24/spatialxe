@@ -21,7 +21,8 @@ process SEGGER_TRAIN {
 
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def script_path = "${env('SEGGER_TRAIN_MODEL')}"
+    def script_path = "${System.getenv('SEGGER_TRAIN_MODEL')}"
+
 
     """
     python3 ${script_path} \\

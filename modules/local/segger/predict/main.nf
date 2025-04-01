@@ -25,7 +25,7 @@ process SEGGER_PREDICT {
 
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def script_path = "${env('SEGGER_PREDICT')}"
+    def script_path = "${System.getenv('SEGGER_PREDICT')}"
 
     """
     python3 ${script_path} \\
