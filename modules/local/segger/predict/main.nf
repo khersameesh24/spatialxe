@@ -34,9 +34,9 @@ process SEGGER_PREDICT {
         --transcripts_file ${transcripts} \\
         --benchmarks_dir ${meta.id}_benchmarks_dir \\
         --num_workers ${task.cpus} \\
-        --use_cc ${params.cc_analysis} \\
-        --knn_method ${params.knn_method} \\
-        --batch_size ${params.batch_size} \\
+        --batch_size ${task.batch_size} \\
+        --use_cc ${task.cc_analysis} \\
+        --knn_method ${params.segger_knn_method} \\
         ${args}
 
     cat <<-END_VERSIONS > versions.yml

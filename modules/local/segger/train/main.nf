@@ -30,10 +30,10 @@ process SEGGER_TRAIN {
         --models_dir ${meta.id}_trained_models \\
         --sample_tag ${meta.id} \\
         --num_workers ${task.cpus} \\
-        --batch_size ${params.batch_size} \\
-        --devices ${params.devices} \\
-        --accelerator ${params.accelerator} \\
-        --max_epochs ${params.max_epochs} \\
+        --batch_size ${task.batch_size} \\
+        --max_epochs ${task.max_epochs} \\
+        --devices ${task.devices} \\
+        --accelerator ${params.segger_accelerator} \\
         ${args}
 
     cat <<-END_VERSIONS > versions.yml
