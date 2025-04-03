@@ -87,7 +87,7 @@ workflow SPATIALXE {
     SPATIALDATA_WRITE_RAW(
         ch_bundle,
         'spatialdata_raw'
-     )
+    )
     ch_versions = ch_versions.mix(SPATIALDATA_WRITE_RAW.out.versions)
 
     if ( params.segmentation_refinement ) {
@@ -268,7 +268,7 @@ workflow SPATIALXE {
     }
 
     SPATIALDATA_WRITE_RESEGMENT(
-         XENIUMRANGER_IMPORT_SEGMENTATION.out.bundle,
+        XENIUMRANGER_IMPORT_SEGMENTATION.out.bundle,
         'spatialdata_resegement'
     )
     ch_versions = ch_versions.mix(SPATIALDATA_WRITE_RESEGMENT.out.versions)

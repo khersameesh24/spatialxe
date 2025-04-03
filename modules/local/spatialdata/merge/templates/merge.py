@@ -18,7 +18,7 @@ def main():
     if os.path.exists(output_folder):
         shutil.rmtree(output_folder)
     os.makedirs(output_folder)
-    
+
     # Copy the entire reference bundle as is
     for root, _, files in os.walk(reference_bundle):
         rel_path = os.path.relpath(root, reference_bundle)
@@ -26,7 +26,7 @@ def main():
         os.makedirs(target_path, exist_ok=True)
         for file in files:
             shutil.copy(os.path.join(root, file), os.path.join(target_path, file))
-    
+
     # Rename folders in Points, Shapes, and Tables to raw_*
     for category in ["points", "shapes", "tables"]:
         category_path = os.path.join(output_folder, category)
@@ -36,13 +36,13 @@ def main():
                 print(folder)
                 new_path = os.path.join(category_path, f"raw_{folder}")
                 os.rename(old_path, new_path)
-    
+
     # Copy folders from add_bundle and rename them as reference_*
     for category in ["points", "shapes", "tables"]:
         add_category_path = os.path.join(add_bundle, category)
         output_category_path = os.path.join(output_folder, category)
         os.makedirs(output_category_path, exist_ok=True)
-        
+
         if os.path.exists(add_category_path):
             for folder in next(os.walk(add_category_path))[1]:
                 src_folder = os.path.join(add_category_path, folder)

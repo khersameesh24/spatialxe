@@ -10,7 +10,7 @@ import gzip
 def format_xenium():
 
     print("[START]")
-    
+
     negctrl_regex = "BLANK\\|NegCon"
     if ( "${params.negative_control_regex}" ):
         negctrl_regex = "${params.negative_control_regex}"
