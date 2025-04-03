@@ -9,14 +9,15 @@ process PROSEG {
 
     output:
     tuple val(meta), path("cell-polygons.geojson.gz"), emit: cell_polygons_2d
-    path("expected-counts.csv.gz"), emit: expected_counts
-    path("cell-metadata.csv.gz"), emit: cell_metadata
-    path("transcript-metadata.csv.gz"), emit: transcript_metadata
-    path("gene-metadata.csv.gz"), emit: gene_metadata
-    path("rates.csv.gz"), emit: rates
-    path("cell-polygons-layers.geojson.gz"), emit:  cell_polygons_layers
-    path("cell-hulls.geojson.gz"), emit: cell_hulls
-    path("versions.yml"), emit: versions
+    path("expected-counts.csv.gz")                   , emit: expected_counts
+    path("cell-metadata.csv.gz")                     , emit: cell_metadata
+    path("transcript-metadata.csv.gz")               , emit: transcript_metadata
+    path("gene-metadata.csv.gz")                     , emit: gene_metadata
+    path("rates.csv.gz")                             , emit: rates
+    path("cell-polygons-layers.geojson.gz")          , emit:  cell_polygons_layers
+    path("cell-hulls.geojson.gz")                    , emit: cell_hulls
+    path("union-cell-polygons.geojson.gz")           , emit: union_cell_polygons
+    path("versions.yml")                             , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -72,6 +73,7 @@ process PROSEG {
     touch cell-polygons.geojson.gz
     touch cell-polygons-layers.geojson.gz
     touch cell-hulls.geojson.gz
+    touch union-cell-polygons.geojson.gz
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
