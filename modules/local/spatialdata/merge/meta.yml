@@ -26,15 +26,15 @@ input:
 
 output:
   - spatialxe_bundle:
-    - meta:
-      type: map
-      description: |
-        Groovy Map containing sample information
-        e.g. [ id:'sample' ]
-    - "spatialdata_spatialxe":
-        type: folder
-        description: Spatialdata folder
-        pattern: "${meta.id}/spatialdata_spatialxe/*"
+      - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. [ id:'sample' ]
+      - "spatialdata_spatialxe":
+          type: folder
+          description: Spatialdata folder
+          pattern: "${meta.id}/spatialdata_spatialxe/*"
   - versions:
       type: file
       description: File containing software versions

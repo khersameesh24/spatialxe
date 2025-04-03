@@ -2,7 +2,7 @@ process SEGGER_TRAIN {
     tag "$meta.id"
     label 'process_high'
 
-    container "heylf/segger:0.1.0"
+    container "khersameesh24/segger:0.1.0"
 
     input:
     tuple val(meta), path(dataset_dir)
@@ -21,27 +21,20 @@ process SEGGER_TRAIN {
 
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def script_path = "${task.cli_dir}" + "/train_model.py"
-    """
+    def script_path = "${System.getenv('SEGGER_TRAIN_MODEL')}"
 
+
+    """
     python3 ${script_path} \\
         --dataset_dir ${dataset_dir} \\
         --models_dir ${meta.id}_trained_models \\
         --sample_tag ${meta.id} \\
         --num_workers ${task.cpus} \\
-        --init_emb 8 \\
-        --hidden_channels 32 \\
-        --num_tx_tokens 500 \\
-        --out_channels 8 \\
-        --heads 2 \\
-        --num_mid_layers 2 \\
-        --batch_size 4 \\
-        --accelerator cpu \\
-        --num_workers 2 \\
-        --max_epochs 200 \\
-        --devices 4 \\
-        --strategy auto \\
-        --precision 16-mixed
+        --batch_size ${task.batch_size} \\
+        --max_epochs ${task.max_epochs} \\
+        --devices ${task.devices} \\
+        --accelerator ${params.segger_accelerator} \\
+        ${args}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

@@ -2,7 +2,7 @@ process SEGGER_PREDICT {
     tag "$meta.id"
     label 'process_gpu'
 
-    container "heylf/segger:0.1.0"
+    container "khersameesh24/segger:0.1.0"
 
     input:
     tuple val(meta), path(segger_dataset)
@@ -25,18 +25,20 @@ process SEGGER_PREDICT {
 
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def script_path = "${task.cli_dir}" + "/predict_fast.py"
-    """
-    export CUPY_CACHE_DIR='/tmp/cupy_cache'
+    def script_path = "${System.getenv('SEGGER_PREDICT')}"
 
+    """
     python3 ${script_path} \\
         --models_dir ${models_dir} \\
         --segger_data_dir ${segger_dataset} \\
         --transcripts_file ${transcripts} \\
         --benchmarks_dir ${meta.id}_benchmarks_dir \\
         --num_workers ${task.cpus} \\
-        --knn_method kd_tree \\
+        --batch_size ${task.batch_size} \\
+        --use_cc ${task.cc_analysis} \\
+        --knn_method ${params.segger_knn_method} \\
         ${args}
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         segger: ${task.version}

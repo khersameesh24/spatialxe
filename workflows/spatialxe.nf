@@ -40,11 +40,8 @@ include { BAYSOR_RUN } from '../modules/local/baysor/run/main'
 include { BAYSOR_SEGFREE } from '../modules/local/baysor/segfree/main'
 include { BAYSOR_PREVIEW } from '../modules/local/baysor/preview/main'
 
-include { SEGGER_CREATE_DATASET } from '../modules/local/segger/create_dataset/main'
-include { SEGGER_TRAIN } from '../modules/local/segger/train/main'
-include { SEGGER_PREDICT } from '../modules/local/segger/predict/main'
-
-include { PARQUET_TO_CSV } from '../modules/local/spatialconverter/parquet_to_csv/main'
+// subworkflows
+include { SEGGER_CREATE_TRAIN_PREDICT } from '../subworkflows/local/segger_create_train_predict.nf'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -87,64 +84,30 @@ workflow SPATIALXE {
             meta, bundle, image -> return [ meta, image ]
     }
 
-    SPATIALDATA_WRITE_RAW( 
+    SPATIALDATA_WRITE_RAW(
         ch_bundle,
         'spatialdata_raw'
-     )
+    )
     ch_versions = ch_versions.mix(SPATIALDATA_WRITE_RAW.out.versions)
 
     if ( params.segmentation_refinement ) {
 
-        SEGGER_CREATE_DATASET(
-            ch_bundle
+        SEGGER_CREATE_TRAIN_PREDICT (
+            ch_basedir,
+            ch_transcripts_parquet
         )
-        ch_versions = ch_versions.mix(SEGGER_CREATE_DATASET.out.versions)
-
-        // TODO fix GPU support
-        // FIX also CPU allocation
-        SEGGER_TRAIN(
-            SEGGER_CREATE_DATASET.out.datasetdir
-        )
-        ch_versions = ch_versions.mix(SEGGER_TRAIN.out.versions)
-
-        ch_just_segger_model = SEGGER_TRAIN.out.trained_models.map {
-                meta, models -> return [ models ]
-        }
-
-        ch_just_transcripts_parquet = ch_transcripts_parquet.map {
-                meta, transcripts -> return [ transcripts ]
-        }
-
-        ch_just_segger_model.view()
-
-        SEGGER_PREDICT(
-            SEGGER_CREATE_DATASET.out.datasetdir,
-            ch_just_segger_model,
-            ch_just_transcripts_parquet
-        )
-        ch_versions = ch_versions.mix(SEGGER_PREDICT.out.versions)
-
-        SEGGER_PREDICT.out.transcripts.view()
-
-        PARQUET_TO_CSV(
-            SEGGER_PREDICT.out.transcripts
-        )
-
-        ch_transcripts = PARQUET_TO_CSV.out.transcripts_csv
-        ch_versions = ch_versions.mix(PARQUET_TO_CSV.out.versions)
-
     }
 
     if ( params.segmentation in params.seg_methods ){
 
         if ( params.segmentation == 'cellpose' ){
 
-            CELLPOSE( 
-                ch_image, 
-                [] 
+            CELLPOSE(
+                ch_image,
+                []
             )
 
-            ch_versions = ch_versions.mix(CELLPOSE.out.versions) 
+            ch_versions = ch_versions.mix(CELLPOSE.out.versions)
 
             ch_nulcleus_segmentation = CELLPOSE.out.mask.map {
                 meta, mask -> return [ mask ]
@@ -194,14 +157,14 @@ workflow SPATIALXE {
                 PROSEG2BAYSOR.out.xr_polygons,
                 "microns"
             )
-            ch_versions = ch_versions.mix(XENIUMRANGER_IMPORT_SEGMENTATION.out.versions) 
-            
+            ch_versions = ch_versions.mix(XENIUMRANGER_IMPORT_SEGMENTATION.out.versions)
+
         }
 
         if ( params.segmentation == 'baysor_segmentation' ){
 
             GUNZIP( ch_transcripts )
-            ch_versions = ch_versions.mix(GUNZIP.out.versions) 
+            ch_versions = ch_versions.mix(GUNZIP.out.versions)
 
             if ( params.baysor_rerun ){
 
@@ -216,7 +179,7 @@ workflow SPATIALXE {
                     ch_just_image,
                     30 // TODO probably better to inroduce a parameter here
                 )
-                ch_versions = ch_versions.mix(BAYSOR_RUN.out.versions) 
+                ch_versions = ch_versions.mix(BAYSOR_RUN.out.versions)
 
                 ch_segmentation = BAYSOR_RUN.out.segmentation.map {
                     meta, segmentation -> return [ segmentation ]
@@ -228,7 +191,7 @@ workflow SPATIALXE {
                     [],
                     30 // TODO probably better to inroduce a parameter here
                 )
-                ch_versions = ch_versions.mix(BAYSOR_RUN.out.versions) 
+                ch_versions = ch_versions.mix(BAYSOR_RUN.out.versions)
 
                 ch_segmentation = BAYSOR_RUN.out.segmentation.map {
                     meta, segmentation -> return [ segmentation ]
@@ -244,7 +207,7 @@ workflow SPATIALXE {
                     BAYSOR_RUN.out.polygons2d,
                     "microns"
                 )
-                ch_versions = ch_versions.mix(XENIUMRANGER_IMPORT_SEGMENTATION.out.versions) 
+                ch_versions = ch_versions.mix(XENIUMRANGER_IMPORT_SEGMENTATION.out.versions)
             }
 
         }
@@ -260,7 +223,7 @@ workflow SPATIALXE {
                 ch_transcripts,
                 []
             )
-            ch_versions = ch_versions.mix(FICTURE_PREPROCESS.out.versions) 
+            ch_versions = ch_versions.mix(FICTURE_PREPROCESS.out.versions)
 
             FICTURE_PREPROCESS.out.features.view()
 
@@ -274,14 +237,14 @@ workflow SPATIALXE {
                 FICTURE_PREPROCESS.out.coordinate_minmax,
                 ch_features
             )
-            ch_versions = ch_versions.mix(FICTURE.out.versions) 
+            ch_versions = ch_versions.mix(FICTURE.out.versions)
 
         }
 
         if ( params.segmentation == 'baysor_segmentation_free' ) {
 
             GUNZIP( ch_transcripts )
-            ch_versions = ch_versions.mix(GUNZIP.out.versions) 
+            ch_versions = ch_versions.mix(GUNZIP.out.versions)
 
             BAYSOR_SEGFREE(
                 GUNZIP.out.gunzip
@@ -295,7 +258,7 @@ workflow SPATIALXE {
     if ( params.segmentation == 'baysor_preview' ) {
 
         GUNZIP( ch_transcripts )
-        ch_versions = ch_versions.mix(GUNZIP.out.versions) 
+        ch_versions = ch_versions.mix(GUNZIP.out.versions)
 
         BAYSOR_PREVIEW(
             GUNZIP.out.gunzip
@@ -305,7 +268,7 @@ workflow SPATIALXE {
     }
 
     SPATIALDATA_WRITE_RESEGMENT(
-         XENIUMRANGER_IMPORT_SEGMENTATION.out.bundle,
+        XENIUMRANGER_IMPORT_SEGMENTATION.out.bundle,
         'spatialdata_resegement'
     )
     ch_versions = ch_versions.mix(SPATIALDATA_WRITE_RESEGMENT.out.versions)
@@ -315,7 +278,7 @@ workflow SPATIALXE {
         SPATIALDATA_WRITE_RESEGMENT.out.spatialdata
     )
 
-    SPATIALDATA_META( 
+    SPATIALDATA_META(
         SPATIALDATA_MERGE.out.spatialxe_bundle,
         ch_bundle
     )

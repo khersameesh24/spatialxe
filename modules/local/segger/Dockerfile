@@ -33,18 +33,15 @@ RUN pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1
 RUN git clone https://github.com/EliHei2/segger_dev.git /workspace/segger_dev && \
     pip install -e "/workspace/segger_dev[cuda12]"
 
-# Set the environment variable NUMBA_CACHE_DIR
-ENV NUMBA_CACHE_DIR '/tmp'
-
-# Create a non-root user for security
-RUN useradd --create-home seggeruser
-USER seggeruser
-
-# Set a writable CuPy cache directory
-ENV CUPY_CACHE_DIR='/tmp/cupy_cache'
-
 # Set environment variables
 ENV PYTHONPATH=/workspace/segger_dev/src:$PYTHONPATH
+ENV SEGGER_CREATE_DATASET="/workspace/segger_dev/src/segger/cli/create_dataset_fast.py"
+ENV SEGGER_TRAIN_MODEL="/workspace/segger_dev/src/segger/cli/train_model.py"
+ENV SEGGER_PREDICT="/workspace/segger_dev/src/segger/cli/predict_fast.py"
+ENV CUPY_CACHE_DIR="/tmp/cupy_cache"
 
-# expose ports for debugpy and jupyterlab
-EXPOSE 5678 8888
+# Create a non-root user for security
+RUN useradd --create-home seguser
+USER seguser
+
+ENTRYPOINT [ "/bin/bash" ]

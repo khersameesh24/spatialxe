@@ -10,7 +10,7 @@ process FICTURE {
     path(features)
 
     output:
-    tuple val(meta), path("results/**")     , emit: results 
+    tuple val(meta), path("results/**")     , emit: results
     path "versions.yml"                     , emit: versions
 
     when:

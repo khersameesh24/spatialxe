@@ -25,6 +25,7 @@
 
 <!-- TODO nf-core: Include a figure that guides the user through the major workflow steps. Many nf-core
      workflows use the "tube map" design for that. See https://nf-co.re/docs/contributing/design_guidelines#examples for examples.   -->
+
 1. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
 
 ## Usage
@@ -69,6 +70,7 @@ For more details about the output files and reports, please refer to the
 [output documentation](https://nf-co.re/spatialxe/output).
 
 ## Credits
+
 nf-core/spatialxe was originally written by Sameesh Kher (khersameesh24) and Florian Heyl (heylf).
 
 We thank the following people for their extensive assistance in the development of this pipeline:
