@@ -28,9 +28,6 @@ include { SPATIALDATA_META } from '../modules/local/spatialdata/meta/main'
 // segmentation processes
 include { CELLPOSE } from '../modules/nf-core/cellpose/main'
 
-include { PROSEG } from '../modules/local/proseg/main'
-include { PROSEG2BAYSOR } from '../modules/local/proseg/preprocess/main'
-
 include { FICTURE_PREPROCESS } from '../modules/local/ficture/preprocess/main'
 include { FICTURE } from '../modules/local/ficture/model/main'
 
@@ -42,6 +39,7 @@ include { BAYSOR_PREVIEW } from '../modules/local/baysor/preview/main'
 
 // subworkflows
 include { SEGGER_CREATE_TRAIN_PREDICT } from '../subworkflows/local/segger_create_train_predict.nf'
+include { PROSEG_PROSEG_PROSEG2BAYSOR } from '../subworkflows/local/proseg_proseg_proseg2baysor.nf'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -137,14 +135,7 @@ workflow SPATIALXE {
 
         if ( params.segmentation == 'proseg' ){
 
-            PROSEG( ch_transcripts )
-            ch_versions = ch_versions.mix(PROSEG.out.versions)
-
-            PROSEG2BAYSOR(
-                PROSEG.out.cell_polygons_2d,
-                PROSEG.out.transcript_metadata
-            )
-            ch_versions = ch_versions.mix(PROSEG2BAYSOR.out.versions)
+            PROSEG_PROSEG_PROSEG2BAYSOR( ch_transcripts )
 
             // TODO https://github.com/dcjones/proseg defines here to use --units microns, do we need to do this?
             XENIUMRANGER_IMPORT_SEGMENTATION(
