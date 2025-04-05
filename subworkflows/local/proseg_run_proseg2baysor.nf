@@ -5,7 +5,7 @@
 include { PROSEG            } from '../../modules/local/proseg/run/main'
 include { PROSEG2BAYSOR     } from '../../modules/local/proseg/proseg2baysor/main'
 
-workflow PROSEG_PROSEG_PROSEG2BAYSOR {
+workflow PROSEG_RUN_PROSEG2BAYSOR {
 
     take:
 
