@@ -35,7 +35,6 @@ process SEGGER_CREATE_DATASET {
         --n_workers ${task.cpus} \\
         --tile_width ${params.tile_width} \\
         --tile_height ${params.tile_height} \\
-        --accelerator ${params.segger_accelerator} \\
         ${args}
 
     cat <<-END_VERSIONS > versions.yml
