@@ -10,8 +10,8 @@ process FICTURE {
     path(features)
 
     output:
-    tuple val(meta), path("results/**")     , emit: results
-    path "versions.yml"                     , emit: versions
+    tuple val(meta), path("results/**"), emit: results
+    path "versions.yml"                , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -23,13 +23,13 @@ process FICTURE {
 
     """
     ficture run_together \\
-        --in-tsv $transcripts \\
-        --in-minmax $coordinate_minmax \\
-        $features \\
+        --in-tsv ${transcripts} \\
+        --in-minmax ${coordinate_minmax} \\
+        ${features} \\
         --out-dir results \\
         --train-width 12,18 \\
         --n-factor 6,12 \\
-        --n-jobs 4 \\
+        --n-jobs ${task.cpus} \\
         --plot-each-factor \\
         --all
 
