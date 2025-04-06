@@ -21,6 +21,7 @@ process SEGGER_CREATE_DATASET {
 
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
+    def script_path = "/workspace/segger_dev/src/segger/cli/create_dataset_fast.py"
 
     // check for platform values
     if ( !(params.format in ['xenium']) ) {
@@ -28,13 +29,13 @@ process SEGGER_CREATE_DATASET {
     }
 
     """
-    python3 create_dataset_fast.py \\
+    python3 ${script_path} \\
         --base_dir ${base_dir} \\
         --data_dir ${prefix} \\
         --sample_type ${params.format} \\
         --n_workers ${task.cpus} \\
-        --tile_width ${params.tile_width} \\
-        --tile_height ${params.tile_height} \\
+        --tile_width ${task.tile_width} \\
+        --tile_height ${task.tile_height} \\
         ${args}
 
     cat <<-END_VERSIONS > versions.yml
@@ -44,8 +45,10 @@ process SEGGER_CREATE_DATASET {
     """
 
     stub:
+    def args = task.ext.args ?: ''
+    def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    mkdir -p segger_dataset/
+    mkdir -p ${prefix}/
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

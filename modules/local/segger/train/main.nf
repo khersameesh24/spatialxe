@@ -21,16 +21,17 @@ process SEGGER_TRAIN {
 
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
+    def script_path = "/workspace/segger_dev/src/segger/cli/train_model.py"
 
     """
-    python3 train_model.py \\
+    python3 ${script_path} \\
         --dataset_dir ${dataset_dir} \\
         --models_dir ${prefix}_trained_models \\
         --sample_tag ${prefix} \\
         --num_workers ${task.cpus} \\
-        --batch_size ${params.batch_size} \\
-        --max_epochs ${params.max_epochs} \\
-        --devices ${params.devices} \\
+        --batch_size ${task.batch_size} \\
+        --max_epochs ${task.max_epochs} \\
+        --devices ${task.devices} \\
         --accelerator ${params.segger_accelerator} \\
         ${args}
 
