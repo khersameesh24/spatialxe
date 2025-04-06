@@ -25,17 +25,16 @@ process SEGGER_PREDICT {
 
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def script_path = "${System.getenv('SEGGER_PREDICT')}"
 
     """
-    python3 ${script_path} \\
+    python3 predict_fast.py \\
         --models_dir ${models_dir} \\
         --segger_data_dir ${segger_dataset} \\
         --transcripts_file ${transcripts} \\
-        --benchmarks_dir ${meta.id}_benchmarks_dir \\
+        --benchmarks_dir ${prefix}_benchmarks_dir \\
         --num_workers ${task.cpus} \\
-        --batch_size ${task.batch_size} \\
-        --use_cc ${task.cc_analysis} \\
+        --batch_size ${params.batch_size} \\
+        --use_cc ${params.cc_analysis} \\
         --knn_method ${params.segger_knn_method} \\
         ${args}
 
