@@ -9,9 +9,9 @@ process PROSEG2BAYSOR {
     path(transcript_metadata)
 
     output:
-    path("xr-transcript-metadata.csv"), emit: xr_metadata
-    path("xr-cell-polygons.geojson"), emit: xr_polygons
-    path("versions.yml"), emit: versions
+    tuple val(meta), path("xr-cell-polygons.geojson"), emit: xr_polygons
+    path("xr-transcript-metadata.csv")               , emit: xr_metadata
+    path("versions.yml")                             , emit: versions
 
     script:
     // Exit if running this module with -profile conda / -profile mamba
