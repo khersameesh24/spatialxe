@@ -36,8 +36,10 @@ include { BAYSOR_PREVIEW } from '../modules/local/baysor/preview/main'
 
 // subworkflows
 include { SEGGER_CREATE_TRAIN_PREDICT } from '../subworkflows/local/segger_create_train_predict.nf'
-include { PROSEG_RUN_PROSEG2BAYSOR    } from '../subworkflows/local/proseg_proseg_proseg2baysor.nf'
+include { PROSEG_PRESET_PROSEG2BAYSOR } from '../subworkflows/local/proseg_preset_proseg2baysor.nf'
 include { FICTURE_PREPROCESS_MODEL    } from '../subworkflows/local/ficture_preprocess_model.nf'
+
+
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -133,7 +135,7 @@ workflow SPATIALXE {
 
         if ( params.segmentation == 'proseg' ){
 
-            PROSEG_RUN_PROSEG2BAYSOR( ch_transcripts )
+            PROSEG_PRESET_PROSEG2BAYSOR( ch_transcripts )
 
             // TODO https://github.com/dcjones/proseg defines here to use --units microns, do we need to do this?
             XENIUMRANGER_IMPORT_SEGMENTATION(
