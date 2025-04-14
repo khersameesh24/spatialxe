@@ -9,11 +9,11 @@ process BOMS {
 
     output:
     tuple val(meta), path("*_boms_segmentation_out.npy"), emit: segmentation_outs
-    path("*_boms_counts_out.h5"),                         emit: count_matrix
-    path("*_boms_cell_locations.npy"),                    emit: cell_locations
-    path("*_boms_modes.npy"),                             emit: modes
-    path("*_coordinates.npy"),                            emit: modes
-    path "versions.yml",                                  emit: versions
+    path("*_boms_counts_out.h5")                        , emit: count_matrix
+    path("*_boms_cell_locations.npy")                   , emit: cell_locations
+    path("*_boms_modes.npy")                            , emit: modes
+    path("*_coordinates.npy")                           , emit: coordinates
+    path "versions.yml"                                 , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -26,14 +26,8 @@ process BOMS {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     def VERSION = "1.1.0"
-    """
-    template run_boms.py
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        boms: \$(${VERSION})
-    END_VERSIONS
-    """
+    template 'run_boms.py'
 
     stub:
     // Exit if running this module with -profile conda / -profile mamba

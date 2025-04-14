@@ -162,14 +162,27 @@ class BOMS():
 
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run the BOMS Segmentation method on the transcripts from Xenium bundle")
+def main():
+    """
+    Run boms as a nextflow module
+    """
+    transcripts = "${transcripts}"
+    run_id = "${prefix}"
+    version = "${VERSION}"
 
-    # Required arguments
-    parser.add_argument("--transcripts", "-t", required=True, type=str, help="Path to the transcripts.csv.gz from xenium bundle")
-    parser.add_argument("--run_id", "-i", required=True, type=str, help="A specific name to identify the BOMS run")
-
-    args = parser.parse_args()
-
+    # generate process outs
     boms_executor = BOMS()
-    boms_executor.run_segmentation(run_id=args.run_id, transcripts_path=args.transcripts)
+    boms_executor.run_segmentation (
+        transcripts_path=transcripts,
+        run_id=run_id
+    )
+
+    # generate version outs
+    with open("versions.yml", "w") as f:
+        f.write('"${task.process}":\\n')
+        f.write(f'boms: ${version}"\\n')
+
+
+
+if __name__ == "__main__":
+    main()
