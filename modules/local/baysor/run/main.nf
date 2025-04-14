@@ -1,6 +1,7 @@
 process BAYSOR_RUN {
     tag "$meta.id"
     label 'process_high'
+
     container "nf-core/baysor:0.7.1" // TODO julia package OMETIFF needs to be added
 
     input:
@@ -9,16 +10,16 @@ process BAYSOR_RUN {
     val(scale)
 
     output:
-    tuple val(meta), path("segmentation.csv")   , emit: segmentation
-    path "segmentation_polygons_2d.json"        , emit: polygons2d
-    path "segmentation_polygons_3d.json"        , emit: polygons3d
-    path("*.toml")                              , emit: params
-    path("*.log")                               , emit: log
-    path("*.loom")                              , emit: loom
-    path("*.html")                              , emit: htmls
-    path("segmentation_cell_stats.csv")         , emit: stats
-    path "xenium.toml"                          , emit: config
-    path "versions.yml"                         , emit: versions
+    tuple val(meta), path("segmentation.csv"), emit: segmentation
+    path("segmentation_polygons_2d.json")    , emit: polygons2d
+    path("segmentation_polygons_3d.json")    , emit: polygons3d
+    path("*.toml")                           , emit: params
+    path("*.log")                            , emit: log
+    path("*.loom")                           , emit: loom
+    path("*.html")                           , emit: htmls
+    path("segmentation_cell_stats.csv")      , emit: stats
+    path("xenium.toml")                      , emit: config
+    path("versions.yml")                     , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -37,12 +38,13 @@ process BAYSOR_RUN {
     echo "$task.baysor_xenium_config" > xenium.toml
 
     baysor run \\
-    $transcripts \\
-    $prior_segmentation \\
-    $scale \\
+    ${transcripts} \\
+    ${prior_segmentation} \\
+    ${scale} \\
     --plot \\
     --config xenium.toml \\
-    --polygon-format=GeometryCollectionLegacy
+    --polygon-format=GeometryCollectionLegacy \\
+    ${args}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

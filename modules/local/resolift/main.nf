@@ -8,7 +8,7 @@ process RESOLIFT {
     tuple val(meta), path(input)
 
     output:
-    tuple val(meta), path("*.tiff"), emit: output
+    tuple val(meta), path("*.tiff"), emit: enhanced_tiff
     path("versions.yml")           , emit: versions
 
     when:
