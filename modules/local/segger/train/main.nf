@@ -21,14 +21,13 @@ process SEGGER_TRAIN {
 
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def script_path = "${System.getenv('SEGGER_TRAIN_MODEL')}"
-
+    def script_path = "/workspace/segger_dev/src/segger/cli/train_model.py"
 
     """
     python3 ${script_path} \\
         --dataset_dir ${dataset_dir} \\
-        --models_dir ${meta.id}_trained_models \\
-        --sample_tag ${meta.id} \\
+        --models_dir ${prefix}_trained_models \\
+        --sample_tag ${prefix} \\
         --num_workers ${task.cpus} \\
         --batch_size ${task.batch_size} \\
         --max_epochs ${task.max_epochs} \\
@@ -46,7 +45,9 @@ process SEGGER_TRAIN {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    mkdir -p models_dir/
+    mkdir -p ${prefix}_trained_models/
+    touch ${prefix}_trained_models/fakefile.txt
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         segger: "${task.version}"

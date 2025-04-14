@@ -35,13 +35,9 @@ RUN git clone https://github.com/EliHei2/segger_dev.git /workspace/segger_dev &&
 
 # Set environment variables
 ENV PYTHONPATH=/workspace/segger_dev/src:$PYTHONPATH
-ENV SEGGER_CREATE_DATASET="/workspace/segger_dev/src/segger/cli/create_dataset_fast.py"
-ENV SEGGER_TRAIN_MODEL="/workspace/segger_dev/src/segger/cli/train_model.py"
-ENV SEGGER_PREDICT="/workspace/segger_dev/src/segger/cli/predict_fast.py"
+ENV PATH="$PATH:/workspace/segger_dev/src/segger/cli/"
 ENV CUPY_CACHE_DIR="/tmp/cupy_cache"
 
 # Create a non-root user for security
 RUN useradd --create-home seguser
 USER seguser
-
-ENTRYPOINT [ "/bin/bash" ]

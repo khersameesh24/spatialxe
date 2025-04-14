@@ -2,8 +2,6 @@ process SEGGER_CREATE_DATASET {
     tag "$meta.id"
     label 'process_high'
 
-    // TODO update segger container
-    // TODO segger container is massive needs a reduction at some point, at least we need a warning for now
     container "khersameesh24/segger:0.1.0"
 
     input:
@@ -23,7 +21,7 @@ process SEGGER_CREATE_DATASET {
 
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def script_path = "${System.getenv('SEGGER_CREATE_DATASET')}"
+    def script_path = "/workspace/segger_dev/src/segger/cli/create_dataset_fast.py"
 
     // check for platform values
     if ( !(params.format in ['xenium']) ) {
@@ -33,7 +31,7 @@ process SEGGER_CREATE_DATASET {
     """
     python3 ${script_path} \\
         --base_dir ${base_dir} \\
-        --data_dir ${meta.id} \\
+        --data_dir ${prefix} \\
         --sample_type ${params.format} \\
         --n_workers ${task.cpus} \\
         --tile_width ${task.tile_width} \\
@@ -47,8 +45,10 @@ process SEGGER_CREATE_DATASET {
     """
 
     stub:
+    def args = task.ext.args ?: ''
+    def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    mkdir -p segger_dataset/
+    mkdir -p ${prefix}/
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

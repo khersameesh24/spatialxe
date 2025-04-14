@@ -25,14 +25,14 @@ process SEGGER_PREDICT {
 
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def script_path = "${System.getenv('SEGGER_PREDICT')}"
+    def script_path = "/workspace/segger_dev/src/segger/cli/predict_fast.py"
 
     """
     python3 ${script_path} \\
         --models_dir ${models_dir} \\
         --segger_data_dir ${segger_dataset} \\
         --transcripts_file ${transcripts} \\
-        --benchmarks_dir ${meta.id}_benchmarks_dir \\
+        --benchmarks_dir ${prefix}_benchmarks_dir \\
         --num_workers ${task.cpus} \\
         --batch_size ${task.batch_size} \\
         --use_cc ${task.cc_analysis} \\
@@ -49,7 +49,8 @@ process SEGGER_PREDICT {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    mkdir -p benchmarks_dir/
+    mkdir -p ${prefix}_benchmarks_dir/
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         segger: ${task.version}

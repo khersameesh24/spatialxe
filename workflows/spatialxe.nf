@@ -28,9 +28,6 @@ include { SPATIALDATA_META } from '../modules/local/spatialdata/meta/main'
 // segmentation processes
 include { CELLPOSE } from '../modules/nf-core/cellpose/main'
 
-include { FICTURE_PREPROCESS } from '../modules/local/ficture/preprocess/main'
-include { FICTURE } from '../modules/local/ficture/model/main'
-
 include { XENIUMRANGER_IMPORT_SEGMENTATION } from '../modules/nf-core/xeniumranger/import-segmentation/main'
 
 include { BAYSOR_RUN } from '../modules/local/baysor/run/main'
@@ -40,6 +37,9 @@ include { BAYSOR_PREVIEW } from '../modules/local/baysor/preview/main'
 // subworkflows
 include { SEGGER_CREATE_TRAIN_PREDICT } from '../subworkflows/local/segger_create_train_predict.nf'
 include { PROSEG_PRESET_PROSEG2BAYSOR } from '../subworkflows/local/proseg_preset_proseg2baysor.nf'
+include { FICTURE_PREPROCESS_MODEL    } from '../subworkflows/local/ficture_preprocess_model.nf'
+
+
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -210,25 +210,7 @@ workflow SPATIALXE {
 
         if ( params.segmentation == 'ficture' ) {
 
-            FICTURE_PREPROCESS (
-                ch_transcripts,
-                []
-            )
-            ch_versions = ch_versions.mix(FICTURE_PREPROCESS.out.versions)
-
-            FICTURE_PREPROCESS.out.features.view()
-
-            ch_features = []
-            if ( params.features ){
-                ch_features = FICTURE_PREPROCESS.out.features
-            }
-
-            FICTURE(
-                FICTURE_PREPROCESS.out.transcripts,
-                FICTURE_PREPROCESS.out.coordinate_minmax,
-                ch_features
-            )
-            ch_versions = ch_versions.mix(FICTURE.out.versions)
+            FICTURE_PREPROCESS_MODEL ( ch_transcripts, [] )
 
         }
 
