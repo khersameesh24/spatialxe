@@ -30,14 +30,11 @@ include { CELLPOSE } from '../modules/nf-core/cellpose/main'
 
 include { XENIUMRANGER_IMPORT_SEGMENTATION } from '../modules/nf-core/xeniumranger/import-segmentation/main'
 
-include { BAYSOR_RUN } from '../modules/local/baysor/run/main'
-include { BAYSOR_SEGFREE } from '../modules/local/baysor/segfree/main'
-include { BAYSOR_PREVIEW } from '../modules/local/baysor/preview/main'
-
 // subworkflows
 include { SEGGER_CREATE_TRAIN_PREDICT } from '../subworkflows/local/segger_create_train_predict.nf'
 include { PROSEG_PRESET_PROSEG2BAYSOR } from '../subworkflows/local/proseg_preset_proseg2baysor.nf'
 include { FICTURE_PREPROCESS_MODEL    } from '../subworkflows/local/ficture_preprocess_model.nf'
+include { BAYSOR_PREVIEW_RUN_SEGFREE  } from '../subworkflows/local/baysor_preview_run_segfree.nf'
 
 
 
@@ -96,7 +93,7 @@ workflow SPATIALXE {
         )
     }
 
-    if ( params.segmentation in params.seg_methods ){
+    if ( params.segmentation in params.seg_methods ) {
 
         if ( params.segmentation == 'cellpose' ){
 
@@ -152,43 +149,11 @@ workflow SPATIALXE {
 
         }
 
-        if ( params.segmentation == 'baysor_segmentation' ){
+        if ( params.segmentation == 'baysor_segmentation' ) {
 
-            GUNZIP( ch_transcripts )
-            ch_versions = ch_versions.mix(GUNZIP.out.versions)
+                BAYSOR_PREVIEW_RUN_SEGFREE ( ch_transcripts, ch_image )
 
-            if ( params.baysor_rerun ){
-
-                // TODO baysor container needs julia package OMETIFF
-
-                ch_just_image = ch_image.map {
-                    meta, image -> return [ image ]
-                }
-
-                BAYSOR_RUN(
-                    GUNZIP.out.gunzip,
-                    ch_just_image,
-                    30 // TODO probably better to inroduce a parameter here
-                )
-                ch_versions = ch_versions.mix(BAYSOR_RUN.out.versions)
-
-                ch_segmentation = BAYSOR_RUN.out.segmentation.map {
-                    meta, segmentation -> return [ segmentation ]
-                }
-
-            } else {
-                BAYSOR_RUN(
-                    GUNZIP.out.gunzip,
-                    [],
-                    30 // TODO probably better to inroduce a parameter here
-                )
-                ch_versions = ch_versions.mix(BAYSOR_RUN.out.versions)
-
-                ch_segmentation = BAYSOR_RUN.out.segmentation.map {
-                    meta, segmentation -> return [ segmentation ]
-                }
-
-                XENIUMRANGER_IMPORT_SEGMENTATION(
+                XENIUMRANGER_IMPORT_SEGMENTATION (
                     ch_bundle,
                     [],
                     [],
@@ -207,36 +172,11 @@ workflow SPATIALXE {
 
     if ( params.segmentation in params.segfree_methods ) {
 
-
         if ( params.segmentation == 'ficture' ) {
 
             FICTURE_PREPROCESS_MODEL ( ch_transcripts, [] )
 
         }
-
-        if ( params.segmentation == 'baysor_segmentation_free' ) {
-
-            GUNZIP( ch_transcripts )
-            ch_versions = ch_versions.mix(GUNZIP.out.versions)
-
-            BAYSOR_SEGFREE(
-                GUNZIP.out.gunzip
-            )
-            ch_versions = ch_versions.mix(BAYSOR_SEGFREE.out.versions)
-
-        }
-
-    }
-
-    if ( params.segmentation == 'baysor_preview' ) {
-
-        GUNZIP( ch_transcripts )
-        ch_versions = ch_versions.mix(GUNZIP.out.versions)
-
-        BAYSOR_PREVIEW(
-            GUNZIP.out.gunzip
-        )
-        ch_versions = ch_versions.mix(BAYSOR_PREVIEW.out.versions)
 
     }
 
