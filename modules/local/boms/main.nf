@@ -43,7 +43,6 @@ process BOMS {
     touch ${prefix}_boms_cell_locations.npy
     touch ${prefix}_boms_modes.npy
     touch ${prefix}_coordinates.npy
-    touch versions.yml
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

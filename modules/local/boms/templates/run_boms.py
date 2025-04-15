@@ -2,7 +2,6 @@
 
 
 import h5py
-import argparse
 import numpy as np
 import pandas as pd
 from typing import Tuple
@@ -17,7 +16,7 @@ class BOMS():
         self.range_bandwidth = 0.3
         self.nearest_neighbors = 30
 
-    def run_segmentation(self, transcripts_path, run_id) -> None:
+    def run_segmentation(self, transcripts_path: Path, run_id: str) -> None:
         """
         Runs the BOMS segmentation method on the transcripts provided
         Args:
@@ -25,6 +24,7 @@ class BOMS():
             run_id(str): specific name for the BOMS run
         """
         # read transcripts file
+        print(f"Transcript Path: ${transcripts_path}")
         x_ndarray, y_ndarray, labels = BOMS._read_transcript(transcripts_path=transcripts_path)
 
         # run segmentation
@@ -46,6 +46,8 @@ class BOMS():
         # generate coordinate output
         BOMS._generate_run_outs(outs_array=coordinates, filename="boms_coordinates", run_id=run_id)
 
+        return None
+
 
     @staticmethod
     def _read_transcript(
@@ -65,19 +67,17 @@ class BOMS():
         Returns:
             pd.Series, pd.Series, pd.Series: Extracted x, y coordinates and labels.
         """
-        if Path(transcripts_path).exists():
-            transcripts_df = pd.read_csv(transcripts_path,
-                                        compression='gzip',
-                                        usecols = [x_cord, y_cord, gene_col],
-            )
+        transcripts_df = pd.read_csv(transcripts_path,
+                                    compression='gzip',
+                                    usecols = [x_cord, y_cord, gene_col],
+        )
 
-            x_ndarray: np.ndarray = np.array(pd.Series(transcripts_df[x_cord]))
-            y_ndarray: np.ndarray = np.array(pd.Series(transcripts_df[y_cord]))
-            labels: np.ndarray = np.array(pd.Series(transcripts_df[gene_col]))
+        x_ndarray: np.ndarray = np.array(pd.Series(transcripts_df[x_cord]))
+        y_ndarray: np.ndarray = np.array(pd.Series(transcripts_df[y_cord]))
+        labels: np.ndarray = np.array(pd.Series(transcripts_df[gene_col]))
 
-            return x_ndarray, y_ndarray, labels
-        else:
-            raise FileExistsError(f"{transcripts_path} not found. Check if it exists.")
+        return x_ndarray, y_ndarray, labels
+
 
     @staticmethod
     def _generate_segmentation_outs(
@@ -161,14 +161,13 @@ class BOMS():
         return None
 
 
-
-def main():
+def main() -> None:
     """
     Run boms as a nextflow module
     """
-    transcripts = "${transcripts}"
-    run_id = "${prefix}"
-    version = "${VERSION}"
+    # get input args from main.nf
+    transcripts: str = "${transcripts}"
+    run_id: str = "${prefix}"
 
     # generate process outs
     boms_executor = BOMS()
@@ -180,8 +179,9 @@ def main():
     # generate version outs
     with open("versions.yml", "w") as f:
         f.write('"${task.process}":\\n')
-        f.write(f'boms: ${version}"\\n')
+        f.write(f'boms: 1.1.0"\\n')
 
+    return None
 
 
 if __name__ == "__main__":
