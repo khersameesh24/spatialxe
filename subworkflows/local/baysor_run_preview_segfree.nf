@@ -2,36 +2,25 @@
 // Run baysor preview, run and segfree modules
 //
 
-include { GUNZIP         } from '../../modules/nf-core/gunzip/main'
-include { RESOLIFT       } from '../../modules/local/resolift/main'
-include { BAYSOR_PREVIEW } from '../../modules/local/baysor/preview/main'
-include { BAYSOR_RUN     } from '../../modules/local/baysor/run/main'
-include { BAYSOR_SEGFREE } from '../../modules/local/baysor/segfree/main'
+include { GUNZIP                           } from '../../modules/nf-core/gunzip/main'
+include { RESOLIFT                         } from '../../modules/local/resolift/main'
+include { BAYSOR_RUN                       } from '../../modules/local/baysor/run/main'
+include { BAYSOR_PREVIEW                   } from '../../modules/local/baysor/preview/main'
+include { BAYSOR_SEGFREE                   } from '../../modules/local/baysor/segfree/main'
+include { BAYSOR_CREATE_DATASET            } from '../../modules/local/baysor/create_dataset/main'
+include { XENIUMRANGER_IMPORT_SEGMENTATION } from '../../modules/nf-core/xeniumranger/import-segmentation/main'
 
 workflow BAYSOR_PREVIEW_RUN_SEGFREE {
 
     take:
 
-    ch_transcripts // channel: [ val(meta), [ "transcript.csv.gz" ] ]
+    ch_bundle      // channel: [ val(meta), ["xenium-bundle"] ]
+    ch_transcripts // channel: [ val(meta), [ "transcripts.csv.gz" ] ]
     ch_image       // channel: [ val(meta), [ "morphology_focus.tiff" ] ]
 
     main:
 
     ch_versions    = Channel.empty()
-
-    enhanced_tiff  = Channel.empty()
-
-    preview_html   = Channel.empty()
-
-    segmentation   = Channel.empty()
-    polygons2d     = Channel.empty()
-    polygons3d     = Channel.empty()
-    params         = Channel.empty()
-    loom           = Channel.empty()
-    htmls          = Channel.empty()
-    stats          = Channel.empty()
-
-    ncvs           = Channel.empty()
 
 
     // unzip transcripts.csv.gz
@@ -39,12 +28,14 @@ workflow BAYSOR_PREVIEW_RUN_SEGFREE {
     ch_versions = ch_versions.mix ( GUNZIP.out.versions )
 
 
-    // run baysor preview if param - generate preview is true
+    // run baysor preview if param - generate_preview is true
     if ( params.generate_preview ) {
 
-        // TODO: function to randomly select about 30% rows from transcripts.csv
+        // generate randomised sample data
+        BAYSOR_CREATE_DATASET ( GUNZIP.out.gunzip, "0.3" )
+
         BAYSOR_PREVIEW (
-            GUNZIP.out.gunzip
+            BAYSOR_CREATE_DATASET.out.sampled_transcripts
         )
         ch_versions = ch_versions.mix ( BAYSOR_PREVIEW.out.versions )
 
@@ -67,14 +58,14 @@ workflow BAYSOR_PREVIEW_RUN_SEGFREE {
                 ch_versions = ch_versions.mix(RESOLIFT.out.versions)
 
                 ch_just_image = RESOLIFT.out.enhanced_tiff.map {
-                    meta, image -> return [ image ]
+                    _meta, image -> return [ image ]
                 }
 
             } else {
 
                 // use the original morphology tiff from the bundle
                 ch_just_image = ch_image.map {
-                    meta, image -> return [ image ]
+                    _meta, image -> return [ image ]
                 }
             }
 
@@ -87,8 +78,18 @@ workflow BAYSOR_PREVIEW_RUN_SEGFREE {
             ch_versions = ch_versions.mix(BAYSOR_RUN.out.versions)
 
             ch_segmentation = BAYSOR_RUN.out.segmentation.map {
-                meta, segmentation -> return [ segmentation ]
+                _meta, segmentation -> return [ segmentation ]
             }
+            // run xeniumranger import-segmentation
+            XENIUMRANGER_IMPORT_SEGMENTATION (
+                ch_bundle,
+                [],
+                [],
+                [],
+                ch_segmentation,
+                BAYSOR_RUN.out.polygons2d,
+                "pixel"
+            )
 
         } else {
 
@@ -101,8 +102,18 @@ workflow BAYSOR_PREVIEW_RUN_SEGFREE {
             ch_versions = ch_versions.mix ( BAYSOR_RUN.out.versions )
 
             ch_segmentation = BAYSOR_RUN.out.segmentation.map {
-                meta, segmentation -> return [ segmentation ]
+                _meta, segmentation -> return [ segmentation ]
             }
+            // run xeniumranger import-segmentation
+            XENIUMRANGER_IMPORT_SEGMENTATION (
+                ch_bundle,
+                [],
+                [],
+                [],
+                ch_segmentation,
+                BAYSOR_RUN.out.polygons2d,
+                "microns"
+            )
         }
     }
 
@@ -114,6 +125,16 @@ workflow BAYSOR_PREVIEW_RUN_SEGFREE {
         )
         ch_versions = ch_versions.mix( BAYSOR_SEGFREE.out.versions )
 
+        // run xeniumranger import-segmentation
+        // XENIUMRANGER_IMPORT_SEGMENTATION (
+        //     ch_bundle,
+        //     [],
+        //     [],
+        //     [],
+        //     ch_segmentation,
+        //     BAYSOR_RUN.out.polygons2d,
+        //     "microns"
+        // )
     }
 
     emit:
