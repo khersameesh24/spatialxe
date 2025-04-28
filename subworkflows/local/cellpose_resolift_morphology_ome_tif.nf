@@ -21,20 +21,22 @@ workflow CELLPOSE_RESOLIFT_MORPHOLOGY_OME_TIF {
     cellpose_masks = Channel.empty()
     cellpose_flows = Channel.empty()
 
-    ch_morphology_tif = Channel.empty()
-
     // sharpen morphology tiff if param - sharpen_tiff is true
     if ( params.sharpen_tiff ) {
 
         RESOLIFT ( ch_image )
         ch_versions = ch_versions.mix( RESOLIFT.out.versions )
 
-        ch_morphology_tif = RESOLIFT.out.enhanced_tiff
-    }
+        // run cellpose on the enhanced tiff
+        CELLPOSE ( RESOLIFT.out.enhanced_tiff, params.cellpose_model )
+        ch_versions = ch_versions.mix( CELLPOSE.out.versions )
 
-    // run cellpose on the original tiff
-    CELLPOSE ( ch_morphology_tif, params.cellpose_model )
-    ch_versions = ch_versions.mix( CELLPOSE.out.versions )
+    } else {
+
+        // run cellpose on the original tiff
+        CELLPOSE ( ch_image, params.cellpose_model )
+        ch_versions = ch_versions.mix( CELLPOSE.out.versions )
+    }
 
     // get cellpose segmentation results
     cellpose_cells = CELLPOSE.out.cells.map {
