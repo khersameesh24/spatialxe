@@ -30,7 +30,7 @@ process BAYSOR_RUN {
         error "BAYSOR_RUN module does not support Conda. Please use Docker / Singularity / Podman instead."
     }
     def args = task.ext.args ?: ''
-    def prior_seg = "${prior_segmentation}" ? prior_segmentation : ""
+    def prior_seg = "${prior_segmentation}" ? "${prior_segmentation}" : ""
     def _scale = scale ? "--scale=${scale}": ""
 
     """
