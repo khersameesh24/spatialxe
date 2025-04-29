@@ -1,15 +1,16 @@
 process BAYSOR_PREVIEW {
     tag "$meta.id"
     label 'process_high'
-    container "nf-core/baysor:0.7.1"
+
+    container "khersameesh24/baysor:0.7.1"
 
     input:
     tuple val(meta), path(transcripts)
 
     output:
-    tuple val(meta), path("preview.html")       , emit: preview_html
-    path("preview_preview_log.log")             , emit: preview_log
-    path "versions.yml"                         , emit: versions
+    tuple val(meta), path("preview.html"), emit: preview_html
+    path("preview_preview_log.log")      , emit: preview_log
+    path "versions.yml"                  , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -20,7 +21,6 @@ process BAYSOR_PREVIEW {
         error "BAYSOR_PREVIEW module does not support Conda. Please use Docker / Singularity / Podman instead."
     }
     def args = task.ext.args ?: ''
-    def prefix  = task.ext.prefix ?: "${meta.id}"
     def VERSION = "${params.version}"
 
     """
@@ -28,11 +28,12 @@ process BAYSOR_PREVIEW {
 
     baysor preview \\
     ${transcripts} \\
-    --config xenium.toml
+    --config xenium.toml \\
+    ${args}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        baysor: $task.version
+        baysor: $VERSION
     END_VERSIONS
     """
 
@@ -41,8 +42,6 @@ process BAYSOR_PREVIEW {
     if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
         error "BAYSOR_PREVIEW module does not support Conda. Please use Docker / Singularity / Podman instead."
     }
-    def args = task.ext.args ?: ''
-    def prefix  = task.ext.prefix ?: "${meta.id}"
     def VERSION = "${params.version}"
 
     """
@@ -51,7 +50,7 @@ process BAYSOR_PREVIEW {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        baysor: $task.version
+        baysor: $VERSION
     END_VERSIONS
     """
 }

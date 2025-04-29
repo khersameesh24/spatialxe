@@ -16,15 +16,11 @@ workflow XENIUMRANGER_RELABEL_RESEGMENT {
 
     ch_versions = Channel.empty()
 
-    if ( params.relabel_genes ) {
+    XENIUMRANGER_RELABEL ( ch_bundle, ch_gene_panel )
+    ch_versions = ch_versions.mix ( XENIUMRANGER_RELABEL.out.versions )
 
-        XENIUMRANGER_RELABEL ( ch_bundle, ch_gene_panel )
-        ch_versions = ch_versions.mix ( XENIUMRANGER_RELABEL.out.versions )
-
-        XENIUMRANGER_RESEGMENT ( XENIUMRANGER_RELABEL.out.bundle )
-        ch_versions = ch_versions.mix ( XENIUMRANGER_RESEGMENT.out.versions )
-
-    }
+    XENIUMRANGER_RESEGMENT ( XENIUMRANGER_RELABEL.out.bundle )
+    ch_versions = ch_versions.mix ( XENIUMRANGER_RESEGMENT.out.versions )
 
 
     emit:

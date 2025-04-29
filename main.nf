@@ -15,7 +15,7 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { SPATIALXE  } from './workflows/spatialxe'
+include { SPATIALXE               } from './workflows/spatialxe.nf'
 include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_spatialxe_pipeline'
 include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_spatialxe_pipeline'
 include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_spatialxe_pipeline'

@@ -28,10 +28,10 @@ workflow SEGGER_CREATE_TRAIN_PREDICT {
 
     // run prediction with the trained models
     ch_just_trained_models = SEGGER_TRAIN.out.trained_models.map {
-                meta, models -> return [ models ]
+                _meta, models -> return [ models ]
     }
     ch_just_transcripts_parquet = ch_transcripts_parquet.map {
-                meta, transcripts -> return [ transcripts ]
+                _meta, transcripts -> return [ transcripts ]
     }
     SEGGER_PREDICT ( SEGGER_CREATE_DATASET.out.datasetdir, ch_just_trained_models, ch_just_transcripts_parquet )
     ch_versions = ch_versions.mix ( SEGGER_PREDICT.out.versions )

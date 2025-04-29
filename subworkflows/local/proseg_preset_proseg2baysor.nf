@@ -2,13 +2,15 @@
 // Runs proseg for the xenium format and proseg2baysor to generate cell ploygons
 //
 
-include { PROSEG            } from '../../modules/local/proseg/preset/main'
-include { PROSEG2BAYSOR     } from '../../modules/local/proseg/proseg2baysor/main'
+include { PROSEG                           } from '../../modules/local/proseg/preset/main'
+include { PROSEG2BAYSOR                    } from '../../modules/local/proseg/proseg2baysor/main'
+include { XENIUMRANGER_IMPORT_SEGMENTATION } from '../../modules/nf-core/xeniumranger/import-segmentation/main'
 
 workflow PROSEG_PRESET_PROSEG2BAYSOR {
 
     take:
 
+    ch_bundle      // channel: [ val(meta), ["xenium-bundle"] ]
     ch_transcripts // channel: [ val(meta), [ "transcripts.csv.gz" ] ]
 
     main:
@@ -24,21 +26,31 @@ workflow PROSEG_PRESET_PROSEG2BAYSOR {
     PROSEG2BAYSOR ( PROSEG.out.cell_polygons_2d, PROSEG.out.transcript_metadata )
     ch_versions = ch_versions.mix( PROSEG2BAYSOR.out.versions )
 
+    ch_metadata = PROSEG2BAYSOR.out.xr_metadata
+    ch_polygons = PROSEG2BAYSOR.out.xr_polygons.map {
+        _meta, polygons -> return [ polygons ]
+    }
+
+    // run xeniumranger import-segmentation
+    XENIUMRANGER_IMPORT_SEGMENTATION (
+        ch_bundle,
+        [],
+        [],
+        [],
+        ch_metadata,
+        ch_polygons,
+        "microns"
+    )
+
     emit:
 
-    cell_polygons_2d      = PROSEG.out.cell_polygons_2d        // channel: [ val(meta), [ "cell-polygons.geojson.gz" ] ]
-    expected_counts       = PROSEG.out.expected_counts         // channel: [ [ "expected-counts.csv.gz" ] ]
-    cell_metadata         = PRPSEG.out.cell_metadata           // channel: [ [ "cell-metadata.csv.gz" ] ]
-    transcript_metadata   = PROSEG.out.transcript_metadata     // channel: [ [ "transcript-metadata.csv.gz" ] ]
-    gene_metadata         = PROSEG.out.gene_metadata           // channel: [ [ "gene-metadata.csv.gz" ] ]
-    rates                 = PROSEG.out.rates                   // channel: [ [ "rates.csv.gz" ] ]
-    cell_polygons_layers  = PROSEG.out.cell_polygons_layers    // channel: [ [ "cell-polygons-layers.geojson.gz" ] ]
-    cell_hulls            = PROSEG.out.cell_hulls              // channel: [ [ "cell-hulls.geojson.gz" ] ]
-    union_cell_polygons   = PROSEG.out.union_cell_polygons     // channel: [ [ "union-cell-polygons.geojson.gz" ] ]
+    cell_polygons_2d      = PROSEG.out.cell_polygons_2d                 // channel: [ val(meta), [ "cell-polygons.geojson.gz" ] ]
 
-    xr_polygons           = PROSEG2BAYSOR.out.xr_polygons      // channel: [ val(meta), [ "xr-cell-polygons.geojson" ] ]
-    xr_metadata           = PROSEG2BAYSOR.out.xr_metadata      // channel: [ [ "xr-transcript-metadata.csv" ] ]
+    xr_polygons           = PROSEG2BAYSOR.out.xr_polygons               // channel: [ val(meta), [ "xr-cell-polygons.geojson" ] ]
+    xr_metadata           = PROSEG2BAYSOR.out.xr_metadata               // channel: [ [ "xr-transcript-metadata.csv" ] ]
 
-    versions = ch_versions                                     // channel: [ versions.yml ]
+    redefined_bundle      = XENIUMRANGER_IMPORT_SEGMENTATION.out.bundle // channel: [ val(meta), ["redefined-xenium-bundle"] ]
+
+    versions              = ch_versions                                 // channel: [ versions.yml ]
 }
 

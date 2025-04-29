@@ -12,31 +12,44 @@ include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pi
 // nf-core functionality
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_spatialxe_pipeline'
-include { fromSamplesheet           } from 'plugin/nf-validation'
+include { fromSamplesheet        } from 'plugin/nf-validation'
 
-// nf-core processes
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    SPATIALXE - SEGMENTATION LAYER
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+// coordinate-based segmentation subworklfows
+include { SEGGER_CREATE_TRAIN_PREDICT                      } from '../subworkflows/local/segger_create_train_predict.nf'
+include { PROSEG_PRESET_PROSEG2BAYSOR                      } from '../subworkflows/local/proseg_preset_proseg2baysor.nf'
+include { FICTURE_PREPROCESS_MODEL                         } from '../subworkflows/local/ficture_preprocess_model.nf'
+include { BAYSOR_PREVIEW_RUN_SEGFREE                       } from '../subworkflows/local/baysor_run_preview_segfree.nf'
 
-// spatialxe utility modules
-include { GUNZIP } from '../modules/nf-core/gunzip/main'
+// image-based segmentation subworklfows
+include { CELLPOSE_RESOLIFT_MORPHOLOGY_OME_TIF             } from '../subworkflows/local/cellpose_resolift_morphology_ome_tif.nf'
+include { XENIUMRANGER_RESEGMENT_MORPHOLOGY_OME_TIF        } from '../subworkflows/local/xeniumranger_resegment_morphology_ome_tif.nf'
 
-// local processes
-include { SPATIALDATA_WRITE as SPATIALDATA_WRITE_RAW } from '../modules/local/spatialdata/write/main'
-include { SPATIALDATA_WRITE as SPATIALDATA_WRITE_RESEGMENT } from '../modules/local/spatialdata/write/main'
-include { SPATIALDATA_MERGE } from '../modules/local/spatialdata/merge/main'
-include { SPATIALDATA_META } from '../modules/local/spatialdata/meta/main'
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    SPATIALXE - SPATIALDATA LAYER
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+// spatialdata subworkflows
+include { SPATIALDATA_WRITE_META_MERGE                     } from '../subworkflows/local/spatialdata_write_meta_merge.nf'
 
-// segmentation processes
-include { CELLPOSE } from '../modules/nf-core/cellpose/main'
-
-include { XENIUMRANGER_IMPORT_SEGMENTATION } from '../modules/nf-core/xeniumranger/import-segmentation/main'
-
-// subworkflows
-include { SEGGER_CREATE_TRAIN_PREDICT } from '../subworkflows/local/segger_create_train_predict.nf'
-include { PROSEG_PRESET_PROSEG2BAYSOR } from '../subworkflows/local/proseg_preset_proseg2baysor.nf'
-include { FICTURE_PREPROCESS_MODEL    } from '../subworkflows/local/ficture_preprocess_model.nf'
-include { BAYSOR_PREVIEW_RUN_SEGFREE  } from '../subworkflows/local/baysor_preview_run_segfree.nf'
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    SPATIALXE - XENIUMRANGER LAYER
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+// xeniumranger subworkflows
+include { XENIUMRANGER_RELABEL_RESEGMENT                   } from '../subworkflows/local/xeniumranger_relabel_resegment.nf'
+include { XENIUMRANGER_IMPORT_SEGMENTATION_REDEFINE_BUNDLE } from '../subworkflows/local/xeniumranger_import_segmentation_redefine_bundle.nf'
 
 
+// TODO qc layer subworkflows
+
+// TODO metadata layer subworkflows
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -50,19 +63,14 @@ workflow SPATIALXE {
     ch_samplesheet // channel: samplesheet read in from --input
     main:
 
+// ============================== generate input channels ===================================
+
     ch_versions = Channel.empty()
     ch_multiqc_files = Channel.empty()
     ch_segmentation_mask = Channel.empty()
 
     ch_samplesheet.view()
 
-    // Start subworkflow with segmentation (+- refinement)
-
-    // Start subworkflow without segmentation
-
-    // Just run xeniumranger parts (+- refinemnet)
-
-    // Just do QC
     ch_bundle = ch_samplesheet.map {
         meta, bundle, image -> return [ meta, bundle ]
     }
@@ -79,123 +87,141 @@ workflow SPATIALXE {
             meta, bundle, image -> return [ meta, image ]
     }
 
-    SPATIALDATA_WRITE_RAW(
-        ch_bundle,
-        'spatialdata_raw'
-    )
-    ch_versions = ch_versions.mix(SPATIALDATA_WRITE_RAW.out.versions)
+    ch_raw_bundle = Channel.empty()
+    ch_refined_bundle = Channel.empty()
 
-    if ( params.segmentation_refinement ) {
+// ============================== raw data layer =======================================
 
-        SEGGER_CREATE_TRAIN_PREDICT (
-            ch_basedir,
-            ch_transcripts_parquet
+    // run xr relabel if relabel_genes is true, check if gene_panel.json is provided
+    if ( params.relabel_genes && params.gene_panel ) {
+
+        ch_gene_panel = Channel.fromPath( params.gene_panel, checkIfExists: true )
+        XENIUMRANGER_RELABEL_RESEGMENT (
+            ch_bundle,
+            ch_gene_panel
         )
+        ch_raw_bundle = XENIUMRANGER_RELABEL_RESEGMENT.out.redefined_bundle
+
+    } else {
+
+        ch_raw_bundle = ch_samplesheet.map {
+            meta, bundle, image -> return [ meta, bundle ]
+        }
     }
 
-    if ( params.segmentation in params.seg_methods ) {
+// ============================== data preview layer =======================================
 
-        if ( params.segmentation == 'cellpose' ){
+    // run baysor preview if `generate_preview ` is true
+    BAYSOR_PREVIEW_RUN_SEGFREE (
+        [],
+        ch_transcripts,
+        []
+    )
 
-            CELLPOSE(
+// ============================== segmentation layer =======================================
+
+    // --------------------------image-based segmentation--------------------------------------
+
+
+    if ( params.image_based ) {
+
+        // run xeniumranger resegment with morphology_ome.tif
+        if ( params.segmentation == 'xeniumranger' ) {
+
+            XENIUMRANGER_RESEGMENT_MORPHOLOGY_OME_TIF (
+                ch_raw_bundle
+            )
+            ch_refined_bundle = XENIUMRANGER_RESEGMENT_MORPHOLOGY_OME_TIF.out.redefined_bundle
+        }
+
+        // run baysor run with morphology_ome.tif
+        if ( params.segmentation == 'baysor' ) {
+
+            BAYSOR_PREVIEW_RUN_SEGFREE (
+                ch_raw_bundle,
+                [],
+                ch_image
+            )
+            ch_refined_bundle = BAYSOR_PREVIEW_RUN_SEGFREE.out.redefined_bundle
+        }
+
+        // run cellpose on the morphology_ome.tif
+        if ( params.segmentation == 'cellpose' ) {
+
+            CELLPOSE_RESOLIFT_MORPHOLOGY_OME_TIF (
                 ch_image,
-                []
+                ch_raw_bundle
             )
-
-            ch_versions = ch_versions.mix(CELLPOSE.out.versions)
-
-            ch_nulcleus_segmentation = CELLPOSE.out.mask.map {
-                meta, mask -> return [ mask ]
-            }
-
-            // you need the morphology_focus.tif the normal morpholly.tif might thow an error in
-            // xenium ranger import.
-            ch_cells_segmenetation = CELLPOSE.out.cells.map {
-                meta, cells -> return [ cells ]
-            }
-
-            ch_cells_segmenetation.view()
-
-            XENIUMRANGER_IMPORT_SEGMENTATION(
-                ch_bundle,
-                [],
-                [],
-                ch_nulcleus_segmentation,
-                [],
-                [],
-                [],
-                []
-            )
-            ch_versions = ch_versions.mix(XENIUMRANGER_IMPORT_SEGMENTATION.out.versions)
-
-        }
-
-        if ( params.segmentation == 'proseg' ){
-
-            PROSEG_PRESET_PROSEG2BAYSOR( ch_transcripts )
-
-            // TODO https://github.com/dcjones/proseg defines here to use --units microns, do we need to do this?
-            XENIUMRANGER_IMPORT_SEGMENTATION(
-                ch_bundle,
-                [],
-                [],
-                [],
-                [],
-                PROSEG2BAYSOR.out.xr_metadata,
-                PROSEG2BAYSOR.out.xr_polygons,
-                "microns"
-            )
-            ch_versions = ch_versions.mix(XENIUMRANGER_IMPORT_SEGMENTATION.out.versions)
-
-        }
-
-        if ( params.segmentation == 'baysor_segmentation' ) {
-
-                BAYSOR_PREVIEW_RUN_SEGFREE ( ch_transcripts, ch_image )
-
-                XENIUMRANGER_IMPORT_SEGMENTATION (
-                    ch_bundle,
-                    [],
-                    [],
-                    [],
-                    [],
-                    ch_segmentation,
-                    BAYSOR_RUN.out.polygons2d,
-                    "microns"
-                )
-                ch_versions = ch_versions.mix(XENIUMRANGER_IMPORT_SEGMENTATION.out.versions)
-            }
-
+            ch_refined_bundle = CELLPOSE_RESOLIFT_MORPHOLOGY_OME_TIF.out.redefined_bundle
         }
 
     }
 
-    if ( params.segmentation in params.segfree_methods ) {
+    // ----------------------transcript-based segmentation-----------------------------------
 
-        if ( params.segmentation == 'ficture' ) {
+    // run proseg with transcripts.csv.gz
+    if ( params.coordinate_based ) {
 
-            FICTURE_PREPROCESS_MODEL ( ch_transcripts, [] )
+        // run proseg with transcripts.csv.gz
+        if ( params.segmentation == 'proseg' ) {
 
+            PROSEG_PRESET_PROSEG2BAYSOR (
+                ch_raw_bundle,
+                ch_transcripts
+            )
+            ch_refined_bundle = PROSEG_PRESET_PROSEG2BAYSOR.out.redefined_bundle
+        }
+
+        // run segger with transcripts.csv.gz
+        if ( params.segmenattion == 'segger' ) {
+
+            SEGGER_CREATE_TRAIN_PREDICT (
+                ch_raw_bundle,
+                ch_transcripts_parquet
+            )
+
+        }
+
+        // run baysor with transcripts.csv.gz
+        if ( params.segmenattion == 'baysor' ) {
+
+            BAYSOR_PREVIEW_RUN_SEGFREE (
+                ch_raw_bundle,
+                ch_transcripts,
+                []
+            )
+            ch_refined_bundle = BAYSOR_PREVIEW_RUN_SEGFREE.out.redefined_bundle
         }
 
     }
 
-    SPATIALDATA_WRITE_RESEGMENT(
-        XENIUMRANGER_IMPORT_SEGMENTATION.out.bundle,
-        'spatialdata_resegement'
-    )
-    ch_versions = ch_versions.mix(SPATIALDATA_WRITE_RESEGMENT.out.versions)
+// ============================== Xeniumranger layer =======================================
 
-    SPATIALDATA_MERGE(
-        SPATIALDATA_WRITE_RAW.out.spatialdata,
-        SPATIALDATA_WRITE_RESEGMENT.out.spatialdata
+    // run only xeniumranger import segmentation with changes xr specific params
+    if  ( params.xeniumranger_only ) {
+
+        XENIUMRANGER_IMPORT_SEGMENTATION_REDEFINE_BUNDLE (
+            ch_raw_bundle
+        )
+        ch_refined_bundle = XENIUMRANGER_IMPORT_SEGMENTATION_REDEFINE_BUNDLE.out.redefined_bundle
+    }
+
+
+
+
+// ============================== spatialdata layer =======================================
+
+    // run spatialdata modules to generate sd objects
+    SPATIALDATA_WRITE_META_MERGE (
+        ch_raw_bundle,
+        ch_refined_bundle
     )
 
-    SPATIALDATA_META(
-        SPATIALDATA_MERGE.out.spatialxe_bundle,
-        ch_bundle
-    )
-    ch_versions = ch_versions.mix(SPATIALDATA_META.out.versions)
+// ================================== QC layer ============================================
+
+
+// ============================== metadata layer ==========================================
+
 
     //
     // Collate and save software versions

@@ -2,7 +2,7 @@ process BAYSOR_RUN {
     tag "$meta.id"
     label 'process_high'
 
-    container "nf-core/baysor:0.7.1" // TODO julia package OMETIFF needs to be added
+    container "khersameesh24/baysor:0.7.1"
 
     input:
     tuple val(meta), path(transcripts)
@@ -30,17 +30,16 @@ process BAYSOR_RUN {
         error "BAYSOR_RUN module does not support Conda. Please use Docker / Singularity / Podman instead."
     }
     def args = task.ext.args ?: ''
-    def prefix  = task.ext.prefix ?: "${meta.id}"
-    def prior_segmentation = prior_segmentation ? prior_segmentation: ""
-    def scale = scale ? "--scale=${scale}": ""
+    def prior_seg = "${prior_segmentation}" ? "${prior_segmentation}" : ""
+    def scaling_factor = scale ? "--scale=${scale}": ""
 
     """
     echo "$task.baysor_xenium_config" > xenium.toml
 
     baysor run \\
     ${transcripts} \\
-    ${prior_segmentation} \\
-    ${scale} \\
+    ${prior_seg} \\
+    ${scaling_factor} \\
     --plot \\
     --config xenium.toml \\
     --polygon-format=GeometryCollectionLegacy \\
@@ -57,8 +56,6 @@ process BAYSOR_RUN {
     if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
         error "BAYSOR_RUN module does not support Conda. Please use Docker / Singularity / Podman instead."
     }
-    def args = task.ext.args ?: ''
-    def prefix  = task.ext.prefix ?: "${meta.id}"
 
     """
     touch segmentation.csv
