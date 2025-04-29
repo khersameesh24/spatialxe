@@ -31,7 +31,7 @@ process BAYSOR_RUN {
     }
     def args = task.ext.args ?: ''
     def prior_seg = "${prior_segmentation}" ? "${prior_segmentation}" : ""
-    def _scale = scale ? "--scale=${scale}": ""
+    def scaling_factor = scale ? "--scale=${scale}": ""
 
     """
     echo "$task.baysor_xenium_config" > xenium.toml
@@ -39,7 +39,7 @@ process BAYSOR_RUN {
     baysor run \\
     ${transcripts} \\
     ${prior_seg} \\
-    ${_scale} \\
+    ${scaling_factor} \\
     --plot \\
     --config xenium.toml \\
     --polygon-format=GeometryCollectionLegacy \\

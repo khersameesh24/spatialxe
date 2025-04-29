@@ -10,7 +10,6 @@ workflow FICTURE_PREPROCESS_MODEL {
 
     take:
 
-    ch_bundle
     ch_transcripts // channel: [ val(meta), [ "transcripts.csv.gz" ] ]
     ch_features    // channel: [ "features" ]
 
