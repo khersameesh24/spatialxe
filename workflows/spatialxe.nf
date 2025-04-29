@@ -14,9 +14,6 @@ include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pi
 include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_spatialxe_pipeline'
 include { fromSamplesheet        } from 'plugin/nf-validation'
 
-// nf-core processes
-include { GUNZIP } from '../modules/nf-core/gunzip/main'
-
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     SPATIALXE - SEGMENTATION LAYER
