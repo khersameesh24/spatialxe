@@ -42,7 +42,7 @@ workflow CELLPOSE_RESOLIFT_MORPHOLOGY_OME_TIF {
     cellpose_cells = CELLPOSE.out.cells.map {
         _meta, cells -> return [ cells ]
     }
-    cellpose_masks = CELLPOSE.out.mask.map {
+    cellpose_mask = CELLPOSE.out.mask.map {
         _meta, mask -> return [ mask ]
     }
     cellpose_flows = CELLPOSE.out.flows.map {
@@ -55,7 +55,7 @@ workflow CELLPOSE_RESOLIFT_MORPHOLOGY_OME_TIF {
         XENIUMRANGER_IMPORT_SEGMENTATION (
             ch_bundle,
             [],
-            cellpose_masks,
+            cellpose_mask,
             [],
             [],
             [],
@@ -66,7 +66,7 @@ workflow CELLPOSE_RESOLIFT_MORPHOLOGY_OME_TIF {
         XENIUMRANGER_IMPORT_SEGMENTATION (
             ch_bundle,
             [],
-            cellpose_masks,
+            cellpose_mask,
             cellpose_cells,
             [],
             [],
