@@ -2,13 +2,13 @@
 // Run baysor preview, run and segfree modules
 //
 
-include { GUNZIP                           } from '../../modules/nf-core/gunzip/main'
-include { RESOLIFT                         } from '../../modules/local/resolift/main'
-include { BAYSOR_RUN                       } from '../../modules/local/baysor/run/main'
-include { BAYSOR_PREVIEW                   } from '../../modules/local/baysor/preview/main'
-include { BAYSOR_SEGFREE                   } from '../../modules/local/baysor/segfree/main'
-include { BAYSOR_CREATE_DATASET            } from '../../modules/local/baysor/create_dataset/main'
-include { XENIUMRANGER_IMPORT_SEGMENTATION } from '../../modules/nf-core/xeniumranger/import-segmentation/main'
+include { GUNZIP                           } from '../../../modules/nf-core/gunzip/main'
+include { RESOLIFT                         } from '../../../modules/local/resolift/main'
+include { BAYSOR_RUN                       } from '../../../modules/local/baysor/run/main'
+include { BAYSOR_PREVIEW                   } from '../../../modules/local/baysor/preview/main'
+include { BAYSOR_SEGFREE                   } from '../../../modules/local/baysor/segfree/main'
+include { BAYSOR_CREATE_DATASET            } from '../../../modules/local/baysor/create_dataset/main'
+include { XENIUMRANGER_IMPORT_SEGMENTATION } from '../../../modules/nf-core/xeniumranger/import-segmentation/main'
 
 workflow BAYSOR_PREVIEW_RUN_SEGFREE {
 

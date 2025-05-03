@@ -343,12 +343,12 @@
                 },
                 "pipelines_testdata_base_path": {
                     "type": "string",
-                    "default": "https://raw.githubusercontent.com/nf-core/test-datasets",
+                    "default": "https://raw.githubusercontent.com/nf-core/test-datasets/",
                     "description": "Base URL or local path to location of pipeline test dataset files"
                 },
                 "trace_report_suffix": {
                     "type": "string",
-                    "default": "2025-05-03_01-35-50",
+                    "default": "2025-05-03_13-45-15",
                     "description": "Suffix to add to the trace report filename. Default is the date and time in the format yyyy-MM-dd_HH-mm-ss"
                 }
             }

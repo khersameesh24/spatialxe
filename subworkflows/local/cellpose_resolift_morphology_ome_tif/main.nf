@@ -2,9 +2,9 @@
 // Run cellpose on the morphology tiff
 //
 
-include { CELLPOSE                         } from '../../modules/nf-core/cellpose/main'
-include { RESOLIFT                         } from '../../modules/local/resolift/main'
-include { XENIUMRANGER_IMPORT_SEGMENTATION } from '../../modules/nf-core/xeniumranger/import-segmentation/main'
+include { CELLPOSE                         } from '../../../modules/nf-core/cellpose/main'
+include { RESOLIFT                         } from '../../../modules/local/resolift/main'
+include { XENIUMRANGER_IMPORT_SEGMENTATION } from '../../../modules/nf-core/xeniumranger/import-segmentation/main'
 
 workflow CELLPOSE_RESOLIFT_MORPHOLOGY_OME_TIF {
 
@@ -18,7 +18,7 @@ workflow CELLPOSE_RESOLIFT_MORPHOLOGY_OME_TIF {
     ch_versions = Channel.empty()
 
     cellpose_cells = Channel.empty()
-    cellpose_masks = Channel.empty()
+    cellpose_mask  = Channel.empty()
     cellpose_flows = Channel.empty()
 
     // sharpen morphology tiff if param - sharpen_tiff is true
@@ -39,15 +39,16 @@ workflow CELLPOSE_RESOLIFT_MORPHOLOGY_OME_TIF {
     }
 
     // get cellpose segmentation results
-    cellpose_cells = CELLPOSE.out.cells.map {
-        _meta, cells -> return [ cells ]
-    }
+    cellpose_cells = Channel.fromPath(
+        "${params.outdir}/cellpose/*seg.npy",
+        checkIfExists: true
+    )
     cellpose_mask = CELLPOSE.out.mask.map {
         _meta, mask -> return [ mask ]
     }
     cellpose_flows = CELLPOSE.out.flows.map {
         _meta, flows -> return [ flows ]
-    } // TODO cellpose flows can be used as an input to the boms method
+    }
 
     // run import-segmentation with cellpose results
     if ( params.nucleus_segmentation_only ) {
@@ -78,7 +79,7 @@ workflow CELLPOSE_RESOLIFT_MORPHOLOGY_OME_TIF {
 
     mask  = CELLPOSE.out.mask                                      // channel: [ val(meta), [ "*masks.tif" ] ]
     flows = CELLPOSE.out.flows                                     // channel: [ val(meta), [ "*flows.tif" ] ]
-    cells = CELLPOSE.out.cells                                     // channel: [ val(meta), [ "*seg.npy" ] ]
+    cells = cellpose_cells                                         // channel: [ [ "*seg.npy" ] ]
 
     redefined_bundle = XENIUMRANGER_IMPORT_SEGMENTATION.out.bundle // channel: [ val(meta), ["redefined-xenium-bundle"] ]
 

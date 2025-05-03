@@ -2,9 +2,9 @@
 // Run xeniumranger import-segmentation
 //
 
-include { XENIUMRANGER_IMPORT_SEGMENTATION as IMP_SEG_COUNT_MATRIX_EXP_DISTANCE } from '../../modules/nf-core/xeniumranger/import-segmentation/main'
-include { XENIUMRANGER_IMPORT_SEGMENTATION as IMP_SEG_POLYGON_GEOJSON_INPUT     } from '../../modules/nf-core/xeniumranger/import-segmentation/main'
-include { XENIUMRANGER_IMPORT_SEGMENTATION as IMP_SEG_TRANS_MATRIX_INPUT        } from '../../modules/nf-core/xeniumranger/import-segmentation/main'
+include { XENIUMRANGER_IMPORT_SEGMENTATION as IMP_SEG_COUNT_MATRIX_EXP_DISTANCE } from '../../../modules/nf-core/xeniumranger/import-segmentation/main'
+include { XENIUMRANGER_IMPORT_SEGMENTATION as IMP_SEG_POLYGON_GEOJSON_INPUT     } from '../../../modules/nf-core/xeniumranger/import-segmentation/main'
+include { XENIUMRANGER_IMPORT_SEGMENTATION as IMP_SEG_TRANS_MATRIX_INPUT        } from '../../../modules/nf-core/xeniumranger/import-segmentation/main'
 
 
 workflow XENIUMRANGER_IMPORT_SEGMENTATION_REDEFINE_BUNDLE {
@@ -35,10 +35,27 @@ workflow XENIUMRANGER_IMPORT_SEGMENTATION_REDEFINE_BUNDLE {
             "pixel"
         )
         ch_redefined_bundle = IMP_SEG_COUNT_MATRIX_EXP_DISTANCE.out.bundle
+
+        ch_versions = ch_versions.mix ( IMP_SEG_COUNT_MATRIX_EXP_DISTANCE.out.versions )
     }
 
     // scenario - 2 polygon input - geojson format (from QuPath)
-    if ( params.qupath_polygons ) {
+    if ( params.qupath_polygons && params.nucleus_segmentation_only ) {
+
+        IMP_SEG_POLYGON_GEOJSON_INPUT (
+            ch_bundle,
+            [],
+            params.qupath_polygons,
+            [],
+            [],
+            [],
+            "pixel"
+        )
+        ch_redefined_bundle = IMP_SEG_POLYGON_GEOJSON_INPUT.out.bundle
+
+        ch_versions = ch_versions.mix ( IMP_SEG_POLYGON_GEOJSON_INPUT.out.versions )
+
+    } else if ( params.qupath_polygons ) {
 
         IMP_SEG_POLYGON_GEOJSON_INPUT (
             ch_bundle,
@@ -51,17 +68,8 @@ workflow XENIUMRANGER_IMPORT_SEGMENTATION_REDEFINE_BUNDLE {
         )
         ch_redefined_bundle = IMP_SEG_POLYGON_GEOJSON_INPUT.out.bundle
 
-    } else if ( params.qupath_polygons && params.nucleus_segmentation_only ) {
-        IMP_SEG_POLYGON_GEOJSON_INPUT (
-            ch_bundle,
-            [],
-            params.qupath_polygons,
-            [],
-            [],
-            [],
-            "pixel"
-        )
-        ch_redefined_bundle = IMP_SEG_POLYGON_GEOJSON_INPUT.out.bundle
+        ch_versions = ch_versions.mix ( IMP_SEG_POLYGON_GEOJSON_INPUT.out.versions )
+
     }
 
     // scenario 3 - mask input - included in the cellpose subworkflow
@@ -81,6 +89,8 @@ workflow XENIUMRANGER_IMPORT_SEGMENTATION_REDEFINE_BUNDLE {
             "pixel"
         )
         ch_redefined_bundle = IMP_SEG_TRANS_MATRIX_INPUT.out.bundle
+
+        ch_versions = ch_versions.mix ( IMP_SEG_TRANS_MATRIX_INPUT.out.versions )
     }
 
 
