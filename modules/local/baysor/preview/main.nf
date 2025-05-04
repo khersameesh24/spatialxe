@@ -10,7 +10,7 @@ process BAYSOR_PREVIEW {
     output:
     tuple val(meta), path("preview.html"), emit: preview_html
     path("preview_preview_log.log")      , emit: preview_log
-    path "versions.yml"                  , emit: versions
+    path("versions.yml")                 , emit: versions
 
     when:
     task.ext.when == null || task.ext.when

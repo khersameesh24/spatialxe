@@ -33,6 +33,7 @@ workflow BAYSOR_PREVIEW_RUN_SEGFREE {
 
         // generate randomised sample data
         BAYSOR_CREATE_DATASET ( GUNZIP.out.gunzip, "0.3" )
+        ch_versions = ch_versions.mix ( BAYSOR_CREATE_DATASET.out.versions )
 
         BAYSOR_PREVIEW (
             BAYSOR_CREATE_DATASET.out.sampled_transcripts
@@ -89,7 +90,7 @@ workflow BAYSOR_PREVIEW_RUN_SEGFREE {
             BAYSOR_RUN.out.polygons2d,
             "pixel"
         )
-
+        ch_versions = ch_versions.mix( XENIUMRANGER_IMPORT_SEGMENTATION.out.versions )
     }
 
 
@@ -116,6 +117,7 @@ workflow BAYSOR_PREVIEW_RUN_SEGFREE {
             BAYSOR_RUN.out.polygons2d,
             "microns"
         )
+        ch_versions = ch_versions.mix( XENIUMRANGER_IMPORT_SEGMENTATION.out.versions )
     }
 
 

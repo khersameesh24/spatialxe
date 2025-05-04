@@ -17,10 +17,6 @@ workflow CELLPOSE_RESOLIFT_MORPHOLOGY_OME_TIF {
 
     ch_versions = Channel.empty()
 
-    cellpose_cells = Channel.empty()
-    cellpose_mask  = Channel.empty()
-    cellpose_flows = Channel.empty()
-
     // sharpen morphology tiff if param - sharpen_tiff is true
     if ( params.sharpen_tiff ) {
 
@@ -39,10 +35,9 @@ workflow CELLPOSE_RESOLIFT_MORPHOLOGY_OME_TIF {
     }
 
     // get cellpose segmentation results
-    cellpose_cells = Channel.fromPath(
-        "${params.outdir}/cellpose/*seg.npy",
-        checkIfExists: true
-    )
+    cellpose_cells = CELLPOSE.out.cells.map {
+        _meta, cells -> return [ cells ]
+    }
     cellpose_mask = CELLPOSE.out.mask.map {
         _meta, mask -> return [ mask ]
     }
@@ -62,6 +57,7 @@ workflow CELLPOSE_RESOLIFT_MORPHOLOGY_OME_TIF {
             [],
             ""
         )
+        ch_versions = ch_versions.mix( XENIUMRANGER_IMPORT_SEGMENTATION.out.versions )
     } else {
 
         XENIUMRANGER_IMPORT_SEGMENTATION (
@@ -73,13 +69,14 @@ workflow CELLPOSE_RESOLIFT_MORPHOLOGY_OME_TIF {
             [],
             ""
         )
+        ch_versions = ch_versions.mix( XENIUMRANGER_IMPORT_SEGMENTATION.out.versions )
     }
 
     emit:
 
     mask  = CELLPOSE.out.mask                                      // channel: [ val(meta), [ "*masks.tif" ] ]
     flows = CELLPOSE.out.flows                                     // channel: [ val(meta), [ "*flows.tif" ] ]
-    cells = cellpose_cells                                         // channel: [ [ "*seg.npy" ] ]
+    cells = CELLPOSE.out.cells                                     // channel: [ val(meta), [ "*seg.npy" ] ]
 
     redefined_bundle = XENIUMRANGER_IMPORT_SEGMENTATION.out.bundle // channel: [ val(meta), ["redefined-xenium-bundle"] ]
 

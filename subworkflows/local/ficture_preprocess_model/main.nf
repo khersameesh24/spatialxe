@@ -4,7 +4,7 @@
 
 include { FICTURE_PREPROCESS               } from '../../../modules/local/ficture/preprocess/main'
 include { FICTURE                          } from '../../../modules/local/ficture/model/main'
-include { XENIUMRANGER_IMPORT_SEGMENTATION } from '../../../modules/nf-core/xeniumranger/import-segmentation/main'
+// include { XENIUMRANGER_IMPORT_SEGMENTATION } from '../../../modules/nf-core/xeniumranger/import-segmentation/main'
 
 workflow FICTURE_PREPROCESS_MODEL {
 

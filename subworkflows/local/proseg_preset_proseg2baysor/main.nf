@@ -41,6 +41,7 @@ workflow PROSEG_PRESET_PROSEG2BAYSOR {
         ch_polygons,
         "microns"
     )
+    ch_versions = ch_versions.mix( XENIUMRANGER_IMPORT_SEGMENTATION.out.versions )
 
     emit:
 

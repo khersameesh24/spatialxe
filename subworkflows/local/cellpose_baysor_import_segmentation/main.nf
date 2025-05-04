@@ -46,6 +46,7 @@ workflow CELLPOSE_BAYSOR_IMPORT_SEGMENTATION {
         ch_polygons,
         "pixel"
     )
+    ch_versions = ch_versions.mix ( XENIUMRANGER_IMPORT_SEGMENTATION.out.versions )
 
     emit:
 

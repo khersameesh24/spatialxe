@@ -1,0 +1,18 @@
+Changes in component 'nf-core/cellpose'
+'modules/nf-core/cellpose/meta.yml' is unchanged
+Changes in 'cellpose/main.nf':
+--- modules/nf-core/cellpose/main.nf
++++ modules/nf-core/cellpose/main.nf
+@@ -11,6 +11,7 @@
+     output:
+     tuple val(meta), path("*masks.tif") ,   emit: mask
+     tuple val(meta), path("*flows.tif") ,   emit: flows, optional: true
++    tuple val(meta), path("*seg.npy")   ,   emit: cells, optional: true
+     path "versions.yml"                 ,   emit: versions
+ 
+     when:
+
+'modules/nf-core/cellpose/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/cellpose/tests/main.nf.test' is unchanged
+'modules/nf-core/cellpose/tests/nextflow_wflows.config' is unchanged
+************************************************************
