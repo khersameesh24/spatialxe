@@ -13,6 +13,9 @@ include { softwareVersionsToYAML                           } from '../subworkflo
 include { methodsDescriptionText                           } from '../subworkflows/local/utils_nfcore_spatialxe_pipeline'
 include { paramsSummaryMap                                 } from 'plugin/nf-schema'
 
+// nf-core modules
+include { UNTAR                                            } from '../modules/nf-core/untar/main'
+
 // coordinate-based segmentation subworklfows
 include { SEGGER_CREATE_TRAIN_PREDICT                      } from '../subworkflows/local/segger_create_train_predict/main'
 include { PROSEG_PRESET_PROSEG2BAYSOR                      } from '../subworkflows/local/proseg_preset_proseg2baysor/main'
@@ -54,10 +57,10 @@ workflow SPATIALXE {
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     */
 
-    ch_versions = Channel.empty()
-    ch_multiqc_files = Channel.empty()
-    ch_raw_bundle = Channel.empty()
-    ch_gene_panel = Channel.empty()
+    ch_versions         = Channel.empty()
+    ch_multiqc_files    = Channel.empty()
+    ch_raw_bundle       = Channel.empty()
+    ch_gene_panel       = Channel.empty()
     ch_redefined_bundle = Channel.empty()
 
     ch_samplesheet.view()
@@ -87,6 +90,29 @@ workflow SPATIALXE {
         params.relabel_genes = true
         ch_gene_panel = Channel.fromPath(params.gene_panel)
     }
+
+    /*
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        SPATIALXE - TESTDATA STAGING
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    */
+
+    // check if the run is with test profile
+    if ( workflow.profile.contains('test') ) {
+
+        // get testdata bundle
+        UNTAR(ch_bundle)
+        ch_versions = ch_versions.mix( UNTAR.out.versions )
+
+        // update raw bundle channel
+        ch_raw_bundle = UNTAR.out.untar
+    }
+
+    /*
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        SPATIALXE - RELABEL GENES
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    */
 
     // run xr relabel if relabel_genes is true, check if gene_panel.json is provided
     if ( params.relabel_genes && params.gene_panel ) {
@@ -272,9 +298,12 @@ workflow SPATIALXE {
     */
 
 
-    //
-    // Collate and save software versions
-    //
+
+    /*
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        SPATIALXE - COLLATE & SAVE SOFTWARE VERSIONS
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    */
     softwareVersionsToYAML(ch_versions)
         .collectFile(
             storeDir: "${params.outdir}/pipeline_info",
@@ -284,32 +313,46 @@ workflow SPATIALXE {
         ).set { ch_collated_versions }
 
 
-    //
-    // MODULE: MultiQC
-    //
-    ch_multiqc_config        = Channel.fromPath(
-        "$projectDir/assets/multiqc_config.yml", checkIfExists: true)
+    /*
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        SPATIALXE - MultiQC
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    */
+    ch_multiqc_config        = Channel.fromPath (
+        "$projectDir/assets/multiqc_config.yml",
+        checkIfExists: true
+    )
+
     ch_multiqc_custom_config = params.multiqc_config ?
-        Channel.fromPath(params.multiqc_config, checkIfExists: true) :
+        Channel.fromPath ( params.multiqc_config, checkIfExists: true ) :
         Channel.empty()
+
     ch_multiqc_logo          = params.multiqc_logo ?
-        Channel.fromPath(params.multiqc_logo, checkIfExists: true) :
+        Channel.fromPath( params.multiqc_logo, checkIfExists: true ) :
         Channel.empty()
 
-    summary_params      = paramsSummaryMap(
-        workflow, parameters_schema: "nextflow_schema.json")
-    ch_workflow_summary = Channel.value(paramsSummaryMultiqc(summary_params))
-    ch_multiqc_files = ch_multiqc_files.mix(
-        ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
-    ch_multiqc_custom_methods_description = params.multiqc_methods_description ?
-        file(params.multiqc_methods_description, checkIfExists: true) :
-        file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
-    ch_methods_description                = Channel.value(
-        methodsDescriptionText(ch_multiqc_custom_methods_description))
+    summary_params      = paramsSummaryMap (
+        workflow, parameters_schema: "nextflow_schema.json"
+    )
 
-    ch_multiqc_files = ch_multiqc_files.mix(ch_collated_versions)
-    ch_multiqc_files = ch_multiqc_files.mix(
-        ch_methods_description.collectFile(
+    ch_workflow_summary = Channel.value( paramsSummaryMultiqc( summary_params ) )
+
+    ch_multiqc_files = ch_multiqc_files.mix (
+        ch_workflow_summary.collectFile( name: 'workflow_summary_mqc.yaml' )
+    )
+
+    ch_multiqc_custom_methods_description = params.multiqc_methods_description ?
+        file( params.multiqc_methods_description, checkIfExists: true ) :
+        file( "$projectDir/assets/methods_description_template.yml", checkIfExists: true )
+
+    ch_methods_description                = Channel.value (
+        methodsDescriptionText ( ch_multiqc_custom_methods_description )
+    )
+
+    ch_multiqc_files = ch_multiqc_files.mix ( ch_collated_versions )
+
+    ch_multiqc_files = ch_multiqc_files.mix (
+        ch_methods_description.collectFile (
             name: 'methods_description_mqc.yaml',
             sort: true
         )
@@ -324,7 +367,9 @@ workflow SPATIALXE {
         []
     )
 
-    emit:multiqc_report = MULTIQC.out.report.toList() // channel: /path/to/multiqc_report.html
+    emit:
+
+    multiqc_report = MULTIQC.out.report.toList() // channel: /path/to/multiqc_report.html
     versions       = ch_versions                 // channel: [ path(versions.yml) ]
 
 }
