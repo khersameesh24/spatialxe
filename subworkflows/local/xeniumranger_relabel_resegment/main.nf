@@ -2,8 +2,8 @@
 // run xeniumranger relabel & resegment to redine the xenium bundle
 //
 
-include { XENIUMRANGER_RELABEL   } from '../../modules/nf-core/xeniumranger/relabel/main'
-include { XENIUMRANGER_RESEGMENT } from '../../modules/nf-core/xeniumranger/resegment/main'
+include { XENIUMRANGER_RELABEL   } from '../../../modules/nf-core/xeniumranger/relabel/main'
+include { XENIUMRANGER_RESEGMENT } from '../../../modules/nf-core/xeniumranger/resegment/main'
 
 workflow XENIUMRANGER_RELABEL_RESEGMENT {
 

@@ -1,19 +1,16 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://raw.githubusercontent.com/nf-core/spatialxe/master/nextflow_schema.json",
     "title": "nf-core/spatialxe pipeline parameters",
     "description": "A pipeline for spatialomics 10x Xenium In Situ data.",
     "type": "object",
-    "definitions": {
+    "$defs": {
         "input_output_options": {
             "title": "Input/output options",
             "type": "object",
             "fa_icon": "fas fa-terminal",
             "description": "Define where the pipeline should find input data and save output data.",
-            "required": [
-                "input",
-                "outdir"
-            ],
+            "required": ["input", "outdir"],
             "properties": {
                 "input": {
                     "type": "string",
@@ -22,7 +19,7 @@
                     "schema": "assets/schema_input.json",
                     "mimetype": "text/csv",
                     "pattern": "^\\S+\\.csv$",
-                    "description": "Path to comma-separated file containing information about the samples in the Xenium experiment. (eg: meta,path-to-xenium-bundle,path-to-morphology-image)",
+                    "description": "Path to comma-separated file containing information about the Xenium experiment. (eg; meta,path-to-xenium-bundle,path-to-morphology.ome.tif))",
                     "help_text": "You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row.",
                     "fa_icon": "fas fa-file-csv"
                 },
@@ -31,6 +28,25 @@
                     "format": "directory-path",
                     "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
                     "fa_icon": "fas fa-folder-open"
+                },
+                "segmentation": {
+                    "type": "string",
+                    "enum": ["cellpose", "xeniumranger", "baysor", "proseg", "segger"],
+                    "description": "Segmentation method to run"
+                },
+                "gene_panel": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Path to gene panel JSON file to use for relabeling transcripts with the correct gene."
+                },
+                "qupath_polygons": {
+                    "type": "string",
+                    "description": "Polygon segmentation results in GeoJSON format from QuPath"
+                },
+                "alignment_csv": {
+                    "type": "string",
+                    "description": "Image alignment file containing similarity transform matrix (e.g., the _imagealignment.csv file exported from Xenium Explorer)",
+                    "format": "file-path"
                 },
                 "email": {
                     "type": "string",
@@ -43,6 +59,132 @@
                     "type": "string",
                     "description": "MultiQC report title. Printed as page header, used for filename if not otherwise specified.",
                     "fa_icon": "fas fa-file-signature"
+                }
+            }
+        },
+        "segmentation_options": {
+            "title": "Segmentation options",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "image_based": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Wether to run image-based segmentation methods"
+                },
+                "coordinate_based": {
+                    "type": "boolean",
+                    "description": "Wether to run coordinate-based segmentation methods"
+                },
+                "generate_preview": {
+                    "type": "boolean",
+                    "description": "Wether to generate a preview of the dataset with the transcripts.csv.gz"
+                },
+                "segmentation_refinement": {
+                    "type": "boolean",
+                    "description": "Wether to run refinement on the image-based segmentation methods. Runs coordinate-based methods after the initial image-based segmentation run"
+                },
+                "relabel_genes": {
+                    "type": "boolean",
+                    "description": "Wether to relabel genes with gene_panel.json file. True when gene_panel is provided"
+                },
+                "xeniumranger_only": {
+                    "type": "boolean",
+                    "description": "Wether to run vanilla xeniumranger workflow"
+                },
+                "nucleus_segmentation_only": {
+                    "type": "boolean",
+                    "description": "Wether to only run nucleus segmentation"
+                },
+                "expansion_distance": {
+                    "type": "integer",
+                    "default": 5,
+                    "description": "Nuclei boundary expansion distance in µm. Default: 5 (Min: 0, Max: 15 if either boundary-stain or interior-stain are enabled and 100 if nucleus-expansion only)"
+                },
+                "dapi_filter": {
+                    "type": "integer",
+                    "default": 100,
+                    "description": "Minimum intensity in photoelectrons (pe) to filter nuclei. Default: 100 (appropriate range of values is 0 to 99th percentile of image stack or 1000, whichever is larger)"
+                },
+                "interior_stain": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Specify the name of the interior stain to use or disable. Supported for cell segmentation staining workflow output bundles. Possible options are: \\\"18S\\\" (default) or \\\"disable\\\""
+                },
+                "boundary_stain": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Specify the name of the boundary stain to use or disable. Supported for cell segmentation staining workflow output bundles. Possible options are: \\\"ATP1A1/CD45/E-Cadherin\\\" (default) or \\\"disable\\\""
+                },
+                "sharpen_tiff": {
+                    "type": "boolean",
+                    "description": "Wether to enhance the morphology.ome.tif file"
+                },
+                "segger_accelerator": {
+                    "type": "string",
+                    "default": "cpu",
+                    "description": "Device used for training (e.g., cuda for GPU or cpu)"
+                },
+                "segger_knn_method": {
+                    "type": "string",
+                    "default": "kd_tree",
+                    "description": "Method for KNN computation (e.g., cuda for GPU-based computation)"
+                },
+                "cellpose_model": {
+                    "type": "string",
+                    "default": "nuclei",
+                    "description": "Model to use for running or starting training (eg. cyto3)"
+                },
+                "format": {
+                    "type": "string",
+                    "default": "xenium",
+                    "description": "Preset value for the proseg segmentation method"
+                },
+                "image_seg_methods": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": ["cellpose", "xeniumranger", "baysor"]
+                    },
+                    "description": "List of image-based segmentation methods"
+                },
+                "transcript_seg_methods": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": ["proseg", "segger", "baysor"]
+                    },
+                    "description": "List of transcript-based segmentation methods"
+                },
+                "segfree_methods": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": ["ficture", "baysor"]
+                    },
+                    "description": "List of segmentation-free methods"
+                },
+                "negative_control_regex": {
+                    "type": "string",
+                    "description": "Regex used to identify or match negative control samples in a dataset"
+                },
+                "features": {
+                    "type": "string",
+                    "description": "List of features to be passed to the ficture method"
+                },
+                "baysor_run_image": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Wether to run bayor with image/segmentation-mask"
+                },
+                "baysor_run_transcripts": {
+                    "type": "boolean",
+                    "description": "Wether to run baysor with transcripts.csv.gz"
+                },
+                "baysor_preview": {
+                    "type": "boolean",
+                    "description": "Wether to create a preview of the dataset with transcripts.csv.gz"
                 }
             }
         },
@@ -91,6 +233,11 @@
                     "description": "Institutional config URL link.",
                     "hidden": true,
                     "fa_icon": "fas fa-users-cog"
+                },
+                "test_data_base": {
+                    "type": "string",
+                    "default": "https://raw.githubusercontent.com/nf-core/test-datasets/spatialxe",
+                    "description": "Base path / URL for data used in the test profiles"
                 }
             }
         },
@@ -119,14 +266,7 @@
                     "description": "Method used to save pipeline results to output directory.",
                     "help_text": "The Nextflow `publishDir` option specifies which intermediate files should be saved to the output directory. This option tells the pipeline what method should be used to move these files. See [Nextflow docs](https://www.nextflow.io/docs/latest/process.html#publishdir) for details.",
                     "fa_icon": "fas fa-copy",
-                    "enum": [
-                        "symlink",
-                        "rellink",
-                        "link",
-                        "copy",
-                        "copyNoFollow",
-                        "move"
-                    ],
+                    "enum": ["symlink", "rellink", "link", "copy", "copyNoFollow", "move"],
                     "hidden": true
                 },
                 "email_on_fail": {
@@ -189,20 +329,22 @@
                     "fa_icon": "fas fa-check-square",
                     "hidden": true
                 },
-                "trace_report_suffix": {
-                    "type": "string",
-                    "default": "2025-04-30_01-35-17"
+                "monochromeLogs": {
+                    "type": "boolean",
+                    "description": "Do not use coloured log outputs",
+                    "hidden": true
                 },
                 "pipelines_testdata_base_path": {
                     "type": "string",
                     "default": "https://raw.githubusercontent.com/nf-core/test-datasets/",
-                    "description": "URL to fetch testdata from"
+                    "description": "Base URL or local path to location of pipeline test dataset files",
+                    "hidden": true
                 },
-                "show_hidden": {
-                    "type": "boolean"
-                },
-                "help_full": {
-                    "type": "boolean"
+                "trace_report_suffix": {
+                    "type": "string",
+                    "fa_icon": "far calendar",
+                    "description": "Suffix to add to the trace report filename. Default is the date and time in the format yyyy-MM-dd_HH-mm-ss",
+                    "hidden": true
                 }
             }
         }
@@ -212,143 +354,13 @@
             "$ref": "#/$defs/input_output_options"
         },
         {
+            "$ref": "#/$defs/segmentation_options"
+        },
+        {
             "$ref": "#/$defs/institutional_config_options"
         },
         {
             "$ref": "#/$defs/generic_options"
         }
-    ],
-    "properties": {
-        "segmentation": {
-            "type": "string",
-            "description": "Segmentation method to run",
-            "default": "cellpose"
-        },
-        "sharpen_tiff": {
-            "type": "boolean",
-            "description": "Wether to enhance the morphology.ome.tif file"
-        },
-        "nucleus_segmentation_only": {
-            "type": "boolean",
-            "description": "Wether to run nucleus segmentation only"
-        },
-        "image_based": {
-            "type": "boolean",
-            "default": true,
-            "description": "Wether to run image-based segmentation methods"
-        },
-        "coordinate_based": {
-            "type": "boolean",
-            "description": "Wether to run coordinate-based segmentation methods"
-        },
-        "gene_panel": {
-            "type": "string",
-            "description": "Path to gene panel JSON file to use for relabeling transcripts with the correct gene.",
-            "default": "''"
-        },
-        "generate_preview": {
-            "type": "boolean",
-            "description": "Wether to generate a preview of the dataset with the transcripts.csv.gz"
-        },
-        "xeniumranger_only": {
-            "type": "boolean",
-            "description": "Wether to run vanilla xeniumranger workflow"
-        },
-        "relabel_genes": {
-            "type": "boolean",
-            "description": "Wether to relabel genes with gene_panel.json file. True when gene_panel is provided."
-        },
-        "expansion_distance": {
-            "type": "integer",
-            "default": 5,
-            "description": "Nuclei boundary expansion distance in µm. Default: 5 (Min: 0, Max: 15 if either boundary-stain or interior-stain are enabled and 100 if nucleus-expansion only)."
-        },
-        "dapi_filter": {
-            "type": "integer",
-            "default": 100,
-            "description": "Minimum intensity in photoelectrons (pe) to filter nuclei. Default: 100 (appropriate range of values is 0 to 99th percentile of image stack or 1000, whichever is larger)."
-        },
-        "interior_stain": {
-            "type": "boolean",
-            "default": true,
-            "description": "Specify the name of the interior stain to use or disable. Supported for cell segmentation staining workflow output bundles. Possible options are: \"18S\" (default) or \"disable\"."
-        },
-        "boundary_stain": {
-            "type": "boolean",
-            "default": true,
-            "description": "Specify the name of the boundary stain to use or disable. Supported for cell segmentation staining workflow output bundles. Possible options are: \"ATP1A1/CD45/E-Cadherin\" (default) or \"disable\"."
-        },
-        "qupath_polygons": {
-            "type": "string",
-            "description": "Polygon segmentation results in GeoJSON format from QuPath",
-            "default": "''"
-        },
-        "alignment_csv": {
-            "type": "string",
-            "description": "Image alignment file containing similarity transform matrix (e.g., the _imagealignment.csv file exported from Xenium Explorer)",
-            "default": "''"
-        },
-        "segmentation_refinement": {
-            "type": "boolean",
-            "description": "Wether to run refinement on the image-based segmentation methods. Runs coordinate-based methods after the initial image-based segmentation run."
-        },
-        "segger_accelerator": {
-            "type": "string",
-            "default": "cpu",
-            "description": "Device used for training (e.g., cuda for GPU or cpu)."
-        },
-        "segger_knn_method": {
-            "type": "string",
-            "default": "kd_tree",
-            "description": "Method for KNN computation (e.g., cuda for GPU-based computation)."
-        },
-        "cellpose_model": {
-            "type": "string",
-            "default": "nuclei",
-            "description": "Model to use for running or starting training (eg. cyto3)"
-        },
-        "format": {
-            "type": "string",
-            "default": "xenium",
-            "description": "Preset value for the proseg segmentation method"
-        },
-        "image_seg_methods": {
-            "type": "string",
-            "default": "['cellpose', 'xeniumranger', 'baysor']",
-            "description": "List of image-based segmentation methods"
-        },
-        "transcript_seg_methods": {
-            "type": "string",
-            "default": "['proseg', 'segger', 'baysor']",
-            "description": "List of transcript-based segmentation methods"
-        },
-        "segfree_methods": {
-            "type": "string",
-            "default": "['ficture', 'baysor']",
-            "description": "List of segmentation-free methods"
-        },
-        "negative_control_regex": {
-            "type": "string",
-            "description": "regex used to identify or match negative control samples in a dataset",
-            "default": "''"
-        },
-        "features": {
-            "type": "string",
-            "description": "List of features to be passed to the ficture method",
-            "default": "''"
-        },
-        "baysor_run_image": {
-            "type": "boolean",
-            "default": true,
-            "description": "Wether to run bayor with image/mask with the baysor run command"
-        },
-        "baysor_run_transcripts": {
-            "type": "boolean",
-            "description": "Wether to run baysor with transcripts.csv.gz with the baysor run command"
-        },
-        "baysor_preview": {
-            "type": "boolean",
-            "description": "Wether to create a preview of the dataset with transcripts.csv.gz. True when generate_preview is True"
-        }
-    }
+    ]
 }

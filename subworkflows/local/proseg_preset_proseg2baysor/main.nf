@@ -2,9 +2,9 @@
 // Runs proseg for the xenium format and proseg2baysor to generate cell ploygons
 //
 
-include { PROSEG                           } from '../../modules/local/proseg/preset/main'
-include { PROSEG2BAYSOR                    } from '../../modules/local/proseg/proseg2baysor/main'
-include { XENIUMRANGER_IMPORT_SEGMENTATION } from '../../modules/nf-core/xeniumranger/import-segmentation/main'
+include { PROSEG                           } from '../../../modules/local/proseg/preset/main'
+include { PROSEG2BAYSOR                    } from '../../../modules/local/proseg/proseg2baysor/main'
+include { XENIUMRANGER_IMPORT_SEGMENTATION } from '../../../modules/nf-core/xeniumranger/import-segmentation/main'
 
 workflow PROSEG_PRESET_PROSEG2BAYSOR {
 
@@ -41,6 +41,7 @@ workflow PROSEG_PRESET_PROSEG2BAYSOR {
         ch_polygons,
         "microns"
     )
+    ch_versions = ch_versions.mix( XENIUMRANGER_IMPORT_SEGMENTATION.out.versions )
 
     emit:
 

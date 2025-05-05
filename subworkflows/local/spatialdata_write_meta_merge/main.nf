@@ -2,10 +2,10 @@
 // generate spatialdata object from the spatialxe layers
 //
 
-include { SPATIALDATA_WRITE as SPATIALDATA_WRITE_RAW_BUNDLE       } from '../../modules/local/spatialdata/write/main'
-include { SPATIALDATA_WRITE as SPATIALDATA_WRITE_REDEFINED_BUNDLE } from '../../modules/local/spatialdata/write/main'
-include { SPATIALDATA_MERGE as SPATIALDATA_MERGE_RAW_REDEFINED    } from '../../modules/local/spatialdata/merge/main'
-include { SPATIALDATA_META                                        } from '../../modules/local/spatialdata/meta/main'
+include { SPATIALDATA_WRITE as SPATIALDATA_WRITE_RAW_BUNDLE       } from '../../../modules/local/spatialdata/write/main'
+include { SPATIALDATA_WRITE as SPATIALDATA_WRITE_REDEFINED_BUNDLE } from '../../../modules/local/spatialdata/write/main'
+include { SPATIALDATA_MERGE as SPATIALDATA_MERGE_RAW_REDEFINED    } from '../../../modules/local/spatialdata/merge/main'
+include { SPATIALDATA_META                                        } from '../../../modules/local/spatialdata/meta/main'
 
 workflow SPATIALDATA_WRITE_META_MERGE {
 

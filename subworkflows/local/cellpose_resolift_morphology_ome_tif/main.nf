@@ -2,9 +2,9 @@
 // Run cellpose on the morphology tiff
 //
 
-include { CELLPOSE                         } from '../../modules/nf-core/cellpose/main'
-include { RESOLIFT                         } from '../../modules/local/resolift/main'
-include { XENIUMRANGER_IMPORT_SEGMENTATION } from '../../modules/nf-core/xeniumranger/import-segmentation/main'
+include { CELLPOSE                         } from '../../../modules/nf-core/cellpose/main'
+include { RESOLIFT                         } from '../../../modules/local/resolift/main'
+include { XENIUMRANGER_IMPORT_SEGMENTATION } from '../../../modules/nf-core/xeniumranger/import-segmentation/main'
 
 workflow CELLPOSE_RESOLIFT_MORPHOLOGY_OME_TIF {
 
@@ -16,10 +16,6 @@ workflow CELLPOSE_RESOLIFT_MORPHOLOGY_OME_TIF {
     main:
 
     ch_versions = Channel.empty()
-
-    cellpose_cells = Channel.empty()
-    cellpose_masks = Channel.empty()
-    cellpose_flows = Channel.empty()
 
     // sharpen morphology tiff if param - sharpen_tiff is true
     if ( params.sharpen_tiff ) {
@@ -47,7 +43,7 @@ workflow CELLPOSE_RESOLIFT_MORPHOLOGY_OME_TIF {
     }
     cellpose_flows = CELLPOSE.out.flows.map {
         _meta, flows -> return [ flows ]
-    } // TODO cellpose flows can be used as an input to the boms method
+    }
 
     // run import-segmentation with cellpose results
     if ( params.nucleus_segmentation_only ) {
@@ -61,6 +57,7 @@ workflow CELLPOSE_RESOLIFT_MORPHOLOGY_OME_TIF {
             [],
             ""
         )
+        ch_versions = ch_versions.mix( XENIUMRANGER_IMPORT_SEGMENTATION.out.versions )
     } else {
 
         XENIUMRANGER_IMPORT_SEGMENTATION (
@@ -72,6 +69,7 @@ workflow CELLPOSE_RESOLIFT_MORPHOLOGY_OME_TIF {
             [],
             ""
         )
+        ch_versions = ch_versions.mix( XENIUMRANGER_IMPORT_SEGMENTATION.out.versions )
     }
 
     emit:

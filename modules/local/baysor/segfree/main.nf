@@ -10,7 +10,7 @@ process BAYSOR_SEGFREE {
     output:
     tuple val(meta), path("ncvs.loom"), emit: ncvs
     path("ncvs_segfree_log.log")      , emit: ncvs_log
-    path "versions.yml"               , emit: versions
+    path("versions.yml")              , emit: versions
 
     when:
     task.ext.when == null || task.ext.when

@@ -2,8 +2,8 @@
 // Run xeniumranger resegment
 //
 
-include { XENIUMRANGER_RESEGMENT           } from '../../modules/nf-core/xeniumranger/resegment/main'
-include { XENIUMRANGER_IMPORT_SEGMENTATION } from '../../modules/nf-core/xeniumranger/import-segmentation/main'
+include { XENIUMRANGER_RESEGMENT           } from '../../../modules/nf-core/xeniumranger/resegment/main'
+include { XENIUMRANGER_IMPORT_SEGMENTATION } from '../../../modules/nf-core/xeniumranger/import-segmentation/main'
 
 workflow XENIUMRANGER_RESEGMENT_MORPHOLOGY_OME_TIF {
 

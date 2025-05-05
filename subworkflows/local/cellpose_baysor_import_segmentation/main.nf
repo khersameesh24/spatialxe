@@ -2,9 +2,9 @@
 // Run the cellpose, baysor and import-segmentation flow
 //
 
-include { CELLPOSE                         } from '../../modules/nf-core/cellpose/main'
-include { BAYSOR_RUN                       } from '../../modules/local/baysor/run/main'
-include { XENIUMRANGER_IMPORT_SEGMENTATION } from '../../modules/nf-core/xeniumranger/import-segmentation/main'
+include { CELLPOSE                         } from '../../../modules/nf-core/cellpose/main'
+include { BAYSOR_RUN                       } from '../../../modules/local/baysor/run/main'
+include { XENIUMRANGER_IMPORT_SEGMENTATION } from '../../../modules/nf-core/xeniumranger/import-segmentation/main'
 
 workflow CELLPOSE_BAYSOR_IMPORT_SEGMENTATION {
 
@@ -46,6 +46,7 @@ workflow CELLPOSE_BAYSOR_IMPORT_SEGMENTATION {
         ch_polygons,
         "pixel"
     )
+    ch_versions = ch_versions.mix ( XENIUMRANGER_IMPORT_SEGMENTATION.out.versions )
 
     emit:
 
