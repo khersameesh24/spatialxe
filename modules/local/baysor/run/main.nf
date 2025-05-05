@@ -34,7 +34,7 @@ process BAYSOR_RUN {
     def scaling_factor = scale ? "--scale=${scale}": ""
 
     """
-    echo "$task.baysor_xenium_config" > xenium.toml
+    echo "${task.baysor_xenium_config}" > xenium.toml
 
     baysor run \\
     ${transcripts} \\
@@ -47,7 +47,7 @@ process BAYSOR_RUN {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        baysor: $task.version
+        baysor: ${task.version}
     END_VERSIONS
     """
 
@@ -67,7 +67,7 @@ process BAYSOR_RUN {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        baysor: $task.version
+        baysor: ${task.version}
     END_VERSIONS
     """
 }

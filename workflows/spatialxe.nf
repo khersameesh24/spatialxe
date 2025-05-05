@@ -20,7 +20,11 @@ include { UNTAR                                            } from '../modules/nf
 include { SEGGER_CREATE_TRAIN_PREDICT                      } from '../subworkflows/local/segger_create_train_predict/main'
 include { PROSEG_PRESET_PROSEG2BAYSOR                      } from '../subworkflows/local/proseg_preset_proseg2baysor/main'
 include { FICTURE_PREPROCESS_MODEL                         } from '../subworkflows/local/ficture_preprocess_model/main'
-include { BAYSOR_PREVIEW_RUN_SEGFREE                       } from '../subworkflows/local/baysor_preview_run_segfree/main'
+include { BAYSOR_GENERATE_PREVIEW                          } from '../subworkflows/local/baysor_generate_preview/main'
+include { BAYSOR_RUN_MORPHOLOGY_OME_TIF                    } from '../subworkflows/local/baysor_run_morphology_ome_tif/main'
+include { BAYSOR_RUN_TRANSCRIPTS_CSV                       } from '../subworkflows/local/baysor_run_transcripts_csv/main'
+include { BAYSOR_GENERATE_SEGFREE                          } from '../subworkflows/local/baysor_generate_segfree/main'
+
 
 // image-based segmentation subworklfows
 include { CELLPOSE_RESOLIFT_MORPHOLOGY_OME_TIF             } from '../subworkflows/local/cellpose_resolift_morphology_ome_tif/main'
@@ -85,10 +89,10 @@ workflow SPATIALXE {
             meta, bundle, image -> return [ meta, image ]
     }
 
-    // get gene_panel.json if provided with --gene-panel
-    if (( params.gene_panel ).exists()) {
+    // get gene_panel.json if provided with --gene_panel
+    if (( params.gene_panel )) {
         params.relabel_genes = true
-        ch_gene_panel = Channel.fromPath(params.gene_panel)
+        ch_gene_panel = Channel.fromPath(params.gene_panel, checkIfExists: true)
     }
 
     /*
@@ -138,11 +142,11 @@ workflow SPATIALXE {
     // run baysor preview if `generate_preview ` is true
     if ( params.generate_preview ) {
 
-        BAYSOR_PREVIEW_RUN_SEGFREE (
-            [],
+        BAYSOR_GENERATE_PREVIEW (
             ch_transcripts,
-            []
         )
+        log.info "Preview generated at ${params.outdir}"
+        System.exit(0)
     }
 
     /*
@@ -178,12 +182,12 @@ workflow SPATIALXE {
             // run baysor run with morphology_ome.tif
             if ( params.segmentation == 'baysor' ) {
 
-                BAYSOR_PREVIEW_RUN_SEGFREE (
+                BAYSOR_RUN_MORPHOLOGY_OME_TIF (
                     ch_raw_bundle,
-                    [],
+                    ch_transcripts,
                     ch_image
                 )
-                ch_redefined_bundle = BAYSOR_PREVIEW_RUN_SEGFREE.out.redefined_bundle
+                ch_redefined_bundle = BAYSOR_RUN_MORPHOLOGY_OME_TIF.out.redefined_bundle
             }
 
             // run cellpose on the morphology_ome.tif
@@ -195,10 +199,8 @@ workflow SPATIALXE {
                 )
                 ch_redefined_bundle = CELLPOSE_RESOLIFT_MORPHOLOGY_OME_TIF.out.redefined_bundle
             }
-        } else {
-            error "ERROR: Unknown image-based segmentation method ${params.segmentation}. Options: ${params.image_seg_methods}"
-        }
 
+        }
     }
 
     /*
@@ -234,7 +236,7 @@ workflow SPATIALXE {
             }
 
             // run segger with transcripts.csv.gz
-            if ( params.segmenattion == 'segger' ) {
+            if ( params.segmentation == 'segger' ) {
 
                 SEGGER_CREATE_TRAIN_PREDICT (
                     ch_raw_bundle,
@@ -244,17 +246,16 @@ workflow SPATIALXE {
             }
 
             // run baysor with transcripts.csv.gz
-            if ( params.segmenattion == 'baysor' ) {
+            if ( params.segmentation == 'baysor' ) {
 
-                BAYSOR_PREVIEW_RUN_SEGFREE (
+                BAYSOR_RUN_TRANSCRIPTS_CSV (
                     ch_raw_bundle,
                     ch_transcripts,
                     []
                 )
-                ch_redefined_bundle = BAYSOR_PREVIEW_RUN_SEGFREE.out.redefined_bundle
+                ch_redefined_bundle = BAYSOR_RUN_TRANSCRIPTS_CSV.out.redefined_bundle
             }
-        } else {
-            error "ERROR: Unknown transcript-based segmentation method ${params.segmentation}. Options: ${params.transcript_seg_methods}"
+
         }
     }
 
@@ -311,7 +312,6 @@ workflow SPATIALXE {
             sort: true,
             newLine: true
         ).set { ch_collated_versions }
-
 
     /*
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

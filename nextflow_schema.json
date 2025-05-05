@@ -32,8 +32,7 @@
                 "segmentation": {
                     "type": "string",
                     "enum": ["cellpose", "xeniumranger", "baysor", "proseg", "segger"],
-                    "description": "Segmentation method to run",
-                    "default": "cellpose"
+                    "description": "Segmentation method to run"
                 },
                 "gene_panel": {
                     "type": "string",
@@ -143,18 +142,27 @@
                     "description": "Preset value for the proseg segmentation method"
                 },
                 "image_seg_methods": {
-                    "type": "string",
-                    "default": "['cellpose', 'xeniumranger', 'baysor']",
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": ["cellpose", "xeniumranger", "baysor"]
+                    },
                     "description": "List of image-based segmentation methods"
                 },
                 "transcript_seg_methods": {
-                    "type": "string",
-                    "default": "['proseg', 'segger', 'baysor']",
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": ["proseg", "segger", "baysor"]
+                    },
                     "description": "List of transcript-based segmentation methods"
                 },
                 "segfree_methods": {
-                    "type": "string",
-                    "default": "['ficture', 'baysor']",
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": ["ficture", "baysor"]
+                    },
                     "description": "List of segmentation-free methods"
                 },
                 "negative_control_regex": {

@@ -39,13 +39,9 @@ On release, automated continuous integration tests run the pipeline on a full-si
 `samplesheet.csv`:
 
 ```csv
-sample,fastq_1,fastq_2
-CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz
+sample,bundle,image
+test_sample,/path/to/xenium-bundle/,/path/to/morphology.ome.tif
 ```
-
-Each row represents a fastq file (single-end) or a pair of fastq files (paired end).
-
--->
 
 Now, you can run the pipeline using:
 
@@ -55,7 +51,9 @@ Now, you can run the pipeline using:
 nextflow run nf-core/spatialxe \
    -profile <docker/singularity/.../institute> \
    --input samplesheet.csv \
-   --outdir <OUTDIR>
+   --outdir <OUTDIR> \
+   --imgage_based \
+   --segmentation cellpose
 ```
 
 > [!WARNING]
@@ -71,7 +69,7 @@ For more details about the output files and reports, please refer to the
 
 ## Credits
 
-nf-core/spatialxe was originally written by Sameesh Kher (khersameesh24) and Florian Heyl (heylf).
+nf-core/spatialxe was originally written by [Sameesh Kher](https://github.com/khersameesh24) and  [Florian Heyl](https://github.com/heylf).
 
 We thank the following people for their extensive assistance in the development of this pipeline:
 
