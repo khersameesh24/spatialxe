@@ -29,9 +29,9 @@ workflow PIPELINE_INITIALISATION {
     version           // boolean: Display version and exit
     validate_params   // boolean: Boolean whether to validate parameters against the schema at runtime
     monochrome_logs   // boolean: Do not use coloured log outputs
-    nextflow_cli_args //   array: List of positional nextflow CLI args
-    outdir            //  string: The output directory where the results will be saved
-    input             //  string: Path to input samplesheet
+    nextflow_cli_args // array: List of positional nextflow CLI args
+    outdir            // string: The output directory where the results will be saved
+    input             // string: Path to input samplesheet
 
     main:
 
@@ -149,6 +149,17 @@ workflow PIPELINE_COMPLETION {
 //
 def validateInputParameters() {
 
+    // check if both `--image_based` & `--coordinate_based` are true
+    if ( params.image_based && params.coordinate_based ) {
+        error "ERROR: Use either `--image_based`(true by default) or `--coordinate_based` not both."
+    }
+
+    // check if --relabel_genes is true but --gene_panel is not provided
+    if ( params.relabel_genes && !params.gene_panel ) {
+        log.warn "WARN: Relabel genes is enabled, but gene panel is not provided with the `--gene_panel`. Using the gene_panel.json in the xenium bundle"
+    }
+
+    //
 }
 
 //
