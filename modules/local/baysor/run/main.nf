@@ -34,14 +34,11 @@ process BAYSOR_RUN {
     def scaling_factor = scale ? "--scale=${scale}": ""
 
     """
-    echo "${task.baysor_xenium_config}" > xenium.toml
-
     baysor run \\
     ${transcripts} \\
     ${prior_seg} \\
     ${scaling_factor} \\
     --plot \\
-    --config xenium.toml \\
     --polygon-format=GeometryCollectionLegacy \\
     ${args}
 

@@ -72,23 +72,26 @@ workflow SPATIALXE {
 
     // get xenium bundle path from samplesheet
     ch_bundle = ch_samplesheet.map {
-        meta, bundle, image -> return [ meta, bundle ]
+        meta, bundle, _image -> return [ meta, bundle ]
     }
+    ch_bundle.view()
 
     // get transcript.csv.gz
     ch_transcripts = ch_samplesheet.map {
-        meta, bundle, image -> return [ meta, bundle + "/transcripts.csv.gz" ]
+        meta, bundle, _image -> return [ meta, bundle + "/transcripts.csv.gz" ]
     }
+    ch_transcripts.view()
 
     // get transcript.parquet
     ch_transcripts_parquet = ch_samplesheet.map {
-        meta, bundle, image -> return [ meta, bundle + "/transcripts.parquet" ]
+        meta, bundle, _image -> return [ meta, bundle + "/transcripts.parquet" ]
     }
 
     // get morphology.ome.tif
     ch_image = ch_samplesheet.map {
-            meta, bundle, image -> return [ meta, image ]
+            meta, _bundle, image -> return [ meta, image ]
     }
+    ch_image.view()
 
     // get gene_panel.json if provided with --gene_panel, sets relabel_genes to true
     if (( params.gene_panel )) {
@@ -100,10 +103,9 @@ workflow SPATIALXE {
 
         // gene panel to use if only --relabel_genes is provided
         ch_gene_panel = ch_samplesheet.map {
-            meta, bundle, image -> return [ meta, bundle + "/gene_panel.json" ]
+            meta, bundle, _image -> return [ meta, bundle + "/gene_panel.json" ]
         }
     }
-
     /*
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         SPATIALXE - TESTDATA STAGING
@@ -139,7 +141,7 @@ workflow SPATIALXE {
     } else {
 
         ch_raw_bundle = ch_samplesheet.map {
-            meta, bundle, image -> return [ meta, bundle ]
+            meta, bundle, _image -> return [ meta, bundle ]
         }
     }
 
