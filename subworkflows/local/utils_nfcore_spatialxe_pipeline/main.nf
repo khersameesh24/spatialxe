@@ -151,15 +151,14 @@ def validateInputParameters() {
 
     // check if both `--image_based` & `--coordinate_based` are true
     if ( params.image_based && params.coordinate_based ) {
-        error "ERROR: Use either `--image_based`(true by default) or `--coordinate_based` not both."
+        error "ERROR: Use either `--image_based` or `--coordinate_based` not both."
     }
 
     // check if --relabel_genes is true but --gene_panel is not provided
     if ( params.relabel_genes && !params.gene_panel ) {
-        log.warn "WARN: Relabel genes is enabled, but gene panel is not provided with the `--gene_panel`. Using the gene_panel.json in the xenium bundle"
+        log.warn "Relabel genes is enabled, but gene panel is not provided with the `--gene_panel`. Using `gene_panel.json` in the xenium bundle"
     }
 
-    //
 }
 
 //
