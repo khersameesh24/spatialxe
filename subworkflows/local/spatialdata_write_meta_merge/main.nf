@@ -18,16 +18,22 @@ workflow SPATIALDATA_WRITE_META_MERGE {
     ch_versions = Channel.empty()
 
     // write spatialdata object from the raw xenium bundle
+    raw_bundle_path = ch_raw_bundle.map { meta, file_path ->
+        return [ meta, file(file_path) ]
+    }
     SPATIALDATA_WRITE_RAW_BUNDLE (
-        ch_raw_bundle,
+        raw_bundle_path,
         'spatialdata_raw'
     )
     ch_versions = ch_versions.mix ( SPATIALDATA_WRITE_RAW_BUNDLE.out.versions )
 
 
     // write spatialdata object after running IMP_SEG
+    redefined_bundle_path = ch_redefined_bundle.map { meta, file_path ->
+        return [ meta, file(file_path) ]
+    }
     SPATIALDATA_WRITE_REDEFINED_BUNDLE (
-        ch_redefined_bundle,
+        redefined_bundle_path,
         'spatialdata_redefined'
     )
     ch_versions = ch_versions.mix ( SPATIALDATA_WRITE_REDEFINED_BUNDLE.out.versions )
