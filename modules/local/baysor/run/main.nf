@@ -18,7 +18,6 @@ process BAYSOR_RUN {
     path("*.loom")                           , emit: loom
     path("*.html")                           , emit: htmls
     path("segmentation_cell_stats.csv")      , emit: stats
-    path("xenium.toml")                      , emit: config
     path("versions.yml")                     , emit: versions
 
     when:
@@ -44,7 +43,7 @@ process BAYSOR_RUN {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        baysor: ${task.version}
+        baysor: 0.7.1
     END_VERSIONS
     """
 
@@ -64,7 +63,7 @@ process BAYSOR_RUN {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        baysor: ${task.version}
+        baysor: 0.7.1
     END_VERSIONS
     """
 }

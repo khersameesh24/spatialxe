@@ -40,7 +40,7 @@ On release, automated continuous integration tests run the pipeline on a full-si
 
 ```csv
 sample,bundle,image
-test_sample,/path/to/xenium-bundle/,/path/to/morphology.ome.tif
+test_sample,/path/to/xenium-bundle,/path/to/morphology.ome.tif
 ```
 
 Now, you can run the pipeline using:

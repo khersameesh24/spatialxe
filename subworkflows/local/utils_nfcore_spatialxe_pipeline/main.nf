@@ -71,17 +71,11 @@ workflow PIPELINE_INITIALISATION {
     //
     // Create channel from input file provided through params.input
     //
-
-    print(params.input)
-
     Channel
         .fromList(samplesheetToList(params.input, "${projectDir}/assets/schema_input.json"))
         .map {
             meta, bundle, image -> return [ [id: meta.id], bundle, image ]
         }
-        // .map { samplesheet ->
-        //     validateInputSamplesheet(samplesheet)
-        // }
         .set { ch_samplesheet }
 
     emit:

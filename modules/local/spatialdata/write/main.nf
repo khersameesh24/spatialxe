@@ -4,11 +4,6 @@ process SPATIALDATA_WRITE {
 
     container "heylf/spatialdata:0.2.6"
 
-    // Exit if running this module with -profile conda / -profile mamba
-    if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
-        exit 1, "SPATIALDATA_WRITE module does not support Conda. Please use Docker / Singularity / Podman instead."
-    }
-
     input:
     tuple val(meta), path(bundle, stageAs: "*")
     val(outputfolder)
@@ -21,7 +16,13 @@ process SPATIALDATA_WRITE {
     task.ext.when == null || task.ext.when
 
     script:
+    // Exit if running this module with -profile conda / -profile mamba
+    if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
+        exit 1, "SPATIALDATA_WRITE module does not support Conda. Please use Docker / Singularity / Podman instead."
+    }
+
     def args = task.ext.args ?: ''
+
     template 'write.py'
 
     stub:
