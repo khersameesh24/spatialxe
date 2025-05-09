@@ -69,8 +69,6 @@ workflow SPATIALXE {
     ch_gene_panel       = Channel.empty()
     ch_redefined_bundle = Channel.empty()
 
-    ch_samplesheet.view()
-
     // get samplesheet fields
     ch_bundle_path = ch_samplesheet.map { meta, bundle, _image ->
         return [ meta, file(bundle)]

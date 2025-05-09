@@ -32,7 +32,7 @@ process BAYSOR_SEGFREE {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        baysor: $task.version
+        baysor: 0.7.1
     END_VERSIONS
     """
 
@@ -48,7 +48,7 @@ process BAYSOR_SEGFREE {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        baysor: $task.version
+        baysor: 0.7.1
     END_VERSIONS
     """
 }

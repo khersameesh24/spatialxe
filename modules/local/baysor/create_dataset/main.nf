@@ -20,7 +20,6 @@ process BAYSOR_CREATE_DATASET {
     if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
         error "BAYSOR_CREATE_DATASET module does not support Conda. Please use Docker / Singularity / Podman instead."
     }
-    def VERSION = "${task.version}"
 
     template 'create_dataset.py'
 
@@ -29,14 +28,13 @@ process BAYSOR_CREATE_DATASET {
     if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
         error "BAYSOR_CREATE_DATASET module does not support Conda. Please use Docker / Singularity / Podman instead."
     }
-    def VERSION = "${task.version}"
 
     """
     touch sampled_transcripts.csv
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        Baysor-Preview Create Dataset: $VERSION
+        baysor: 0.7.1
     END_VERSIONS
     """
 }
