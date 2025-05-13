@@ -11,6 +11,7 @@ workflow BAYSOR_GENERATE_PREVIEW {
     take:
 
     ch_transcripts // channel: [ val(meta), ["transcripts.csv.gz"] ]
+    ch_config      // channel: ["path-to-xenium.toml"]
 
     main:
 
@@ -30,7 +31,8 @@ workflow BAYSOR_GENERATE_PREVIEW {
 
     // run baysor preview if param - generate_preview is true
     BAYSOR_PREVIEW (
-        BAYSOR_CREATE_DATASET.out.sampled_transcripts
+        BAYSOR_CREATE_DATASET.out.sampled_transcripts,
+        ch_config
     )
     ch_versions = ch_versions.mix ( BAYSOR_PREVIEW.out.versions )
 
@@ -40,5 +42,5 @@ workflow BAYSOR_GENERATE_PREVIEW {
 
     preview_html     = ch_preview_html   // channel: [ val(meta), ["preview.html"] ]
 
-    versions = ch_versions               // channel: [ versions.yml ]
+    versions         = ch_versions       // channel: [ versions.yml ]
 }

@@ -14,6 +14,7 @@ workflow BAYSOR_RUN_TRANSCRIPTS_CSV {
     ch_bundle      // channel: [ val(meta), ["xenium-bundle"] ]
     ch_transcripts // channel: [ val(meta), ["transcripts.csv.gz"] ]
     ch_image       // channel: [ val(meta), ["morphology_focus.tiff"] ]
+    ch_config      // channel: ["path-to-xenium.toml"]
 
     main:
 
@@ -37,6 +38,7 @@ workflow BAYSOR_RUN_TRANSCRIPTS_CSV {
     BAYSOR_RUN_TRANSCRIPTS (
         ch_unzipped_transcripts,
         [],
+        ch_config,
         30
     )
     ch_versions = ch_versions.mix ( BAYSOR_RUN_TRANSCRIPTS.out.versions )

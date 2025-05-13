@@ -6,6 +6,7 @@ process BAYSOR_SEGFREE {
 
     input:
     tuple val(meta), path(transcripts)
+    path(config)
 
     output:
     tuple val(meta), path("ncvs.loom"), emit: ncvs
@@ -23,11 +24,9 @@ process BAYSOR_SEGFREE {
     def args = task.ext.args ?: ''
 
     """
-    echo "$task.baysor_xenium_config" > xenium.toml
-
     baysor segfree \\
     ${transcripts} \\
-    --config xenium.toml \\
+    --config ${config} \\
     ${args}
 
     cat <<-END_VERSIONS > versions.yml

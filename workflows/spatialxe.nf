@@ -41,7 +41,6 @@ include { SPATIALDATA_WRITE_META_MERGE                     } from '../subworkflo
 
 // TODO qc layer subworkflows
 
-// TODO metadata layer subworkflows
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -98,6 +97,10 @@ workflow SPATIALXE {
         return [ meta, morphology_img ]
     }
 
+    // get baysor xenium config
+    ch_config = Channel.fromPath("${projectDir}/assets/config/xenium.toml", checkIfExists: true)
+    ch_config.view()
+
     // get gene_panel.json if provided with --gene_panel, sets relabel_genes to true
     if (( params.gene_panel )) {
 
@@ -128,6 +131,7 @@ workflow SPATIALXE {
 
         // update raw bundle channel
         ch_raw_bundle = UNTAR.out.untar
+        ch_raw_bundle.view()
 
     } else {
 
@@ -160,13 +164,14 @@ workflow SPATIALXE {
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     */
     // run baysor preview if `generate_preview ` is true
-    if ( params.generate_preview ) {
+    if ( params.generate_preview && params.mode == 'coordinate' ) {
 
         BAYSOR_GENERATE_PREVIEW (
             ch_transcripts,
+            ch_config
         )
         log.info "Preview generated at ${params.outdir}"
-        System.exit(0)
+        exit 0
     }
 
     /*
@@ -174,7 +179,7 @@ workflow SPATIALXE {
         SPATIALXE - IMAGE-BASED SEGMENTATION LAYER
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     */
-    if ( params.image_based ) {
+    if ( params.mode == 'image' ) {
 
         // trigger the default image-based workflow if no method is specified
         if ( !params.segmentation ) {
@@ -182,7 +187,8 @@ workflow SPATIALXE {
             CELLPOSE_BAYSOR_IMPORT_SEGMENTATION (
                 ch_image,
                 ch_bundle_path,
-                ch_transcripts_parquet
+                ch_transcripts_parquet,
+                ch_config
             )
             ch_redefined_bundle = CELLPOSE_BAYSOR_IMPORT_SEGMENTATION.out.redefined_bundle
         }
@@ -205,7 +211,8 @@ workflow SPATIALXE {
                 BAYSOR_RUN_MORPHOLOGY_OME_TIF (
                     ch_raw_bundle,
                     ch_transcripts,
-                    ch_image
+                    ch_image,
+                    ch_config
                 )
                 ch_redefined_bundle = BAYSOR_RUN_MORPHOLOGY_OME_TIF.out.redefined_bundle
             }
@@ -228,7 +235,7 @@ workflow SPATIALXE {
         SPATIALXE - TRANSCRIPT-BASED SEGMENTATION LAYER
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     */
-    if ( params.coordinate_based ) {
+    if ( params.mode == 'coordinate' ) {
 
         // trigger the default transcripts-based workflow if no method is specified
         if ( !params.segmentation ) {
@@ -271,6 +278,7 @@ workflow SPATIALXE {
                 BAYSOR_RUN_TRANSCRIPTS_CSV (
                     ch_raw_bundle,
                     ch_transcripts,
+                    ch_config,
                     []
                 )
                 ch_redefined_bundle = BAYSOR_RUN_TRANSCRIPTS_CSV.out.redefined_bundle

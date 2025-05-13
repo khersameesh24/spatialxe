@@ -7,6 +7,7 @@ process BAYSOR_RUN {
     input:
     tuple val(meta), path(transcripts)
     path(prior_segmentation)
+    path(config)
     val(scale)
 
     output:
@@ -37,6 +38,7 @@ process BAYSOR_RUN {
     ${transcripts} \\
     ${prior_seg} \\
     ${scaling_factor} \\
+    --config=${config} \\
     --plot \\
     --polygon-format=GeometryCollectionLegacy \\
     ${args}

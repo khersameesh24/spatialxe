@@ -13,6 +13,7 @@ workflow CELLPOSE_BAYSOR_IMPORT_SEGMENTATION {
     ch_image        // channel: [ val(meta), ["path-to-morphology.ome.tif"] ]
     ch_bundle       // channel: [ val(meta), ["path-to-xenium-bundle"] ]
     ch_transcripts  // channel: [ val(meta), ["path-to-transcripts.parquet"] ]
+    ch_config       // channel: ["path-to-xenium.toml"]
 
     main:
 
@@ -27,7 +28,7 @@ workflow CELLPOSE_BAYSOR_IMPORT_SEGMENTATION {
     ch_mask = CELLPOSE.out.mask.map {
         _meta, seg_mask -> [ seg_mask ]
     }
-    BAYSOR_RUN ( ch_transcripts, ch_mask, 30 )
+    BAYSOR_RUN ( ch_transcripts, ch_mask, ch_config, 30 )
     ch_versions = ch_versions.mix ( BAYSOR_RUN.out.versions )
 
 

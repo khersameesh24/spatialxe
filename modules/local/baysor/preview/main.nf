@@ -6,6 +6,7 @@ process BAYSOR_PREVIEW {
 
     input:
     tuple val(meta), path(transcripts)
+    path(config)
 
     output:
     tuple val(meta), path("preview.html"), emit: preview_html
@@ -23,11 +24,9 @@ process BAYSOR_PREVIEW {
     def args = task.ext.args ?: ''
 
     """
-    echo "$task.baysor_xenium_config" > xenium.toml
-
     baysor preview \\
     ${transcripts} \\
-    --config xenium.toml \\
+    --config ${config} \\
     ${args}
 
     cat <<-END_VERSIONS > versions.yml
