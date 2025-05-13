@@ -47,13 +47,28 @@ Now, you can run the pipeline using:
 
 <!-- TODO nf-core: update the following command to include all required parameters for a minimal example -->
 
+## Run image-based segmentation mode <br>
+
+`CELLPOSE -> BAYSOR -> XR-IMPORT_SEGMENTATION -> SPATIALDATA -> QC`
+
 ```bash
 nextflow run nf-core/spatialxe \
    -profile <docker/singularity/.../institute> \
    --input samplesheet.csv \
    --outdir <OUTDIR> \
-   --imgage_based \
-   --segmentation cellpose
+   --mode image
+```
+
+## Run coordinate-based segmentation mode <br>
+
+`PROSEG -> BAYSOR -> XR-IMPORT_SEGMENTATION -> SPATIALDATA -> QC`
+
+```bash
+nextflow run nf-core/spatialxe \
+   -profile <docker/singularity/.../institute> \
+   --input samplesheet.csv \
+   --outdir <OUTDIR> \
+   --mode coordinate
 ```
 
 > [!WARNING]
