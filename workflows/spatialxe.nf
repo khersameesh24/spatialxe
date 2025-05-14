@@ -99,7 +99,6 @@ workflow SPATIALXE {
 
     // get baysor xenium config
     ch_config = Channel.fromPath("${projectDir}/assets/config/xenium.toml", checkIfExists: true)
-    ch_config.view()
 
     // get gene_panel.json if provided with --gene_panel, sets relabel_genes to true
     if (( params.gene_panel )) {
@@ -131,7 +130,6 @@ workflow SPATIALXE {
 
         // update raw bundle channel
         ch_raw_bundle = UNTAR.out.untar
-        ch_raw_bundle.view()
 
     } else {
 

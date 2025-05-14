@@ -144,12 +144,16 @@ workflow PIPELINE_COMPLETION {
 def validateInputParameters() {
 
     // check if the segmentation method provided is valid for a mode
-    if ( params.mode == 'image' && !params.image_seg_methods.contains(params.segmentation) ) {
-        error "Error: Invalid segmentation method: ${params.segmentation} provided for the `image` based mode. Options: ${params.image_seg_methods}"
+    if ( params.mode == 'image' && params.segmentation ) {
+        if ( !params.image_seg_methods.contains(params.segmentation) ) {
+            error "Error: Invalid segmentation method: ${params.segmentation} provided for the `image` based mode. Options: ${params.image_seg_methods}"
+        }
     }
 
-    if ( params.mode == 'coordinate' && !params.transcript_seg_methods.contains(params.segmentation) ) {
-        error "Error: Invalid segmentation method: ${params.segmentation} provided for the `coordinate` based mode. Options: ${params.transcript_seg_methods}"
+    if ( params.mode == 'coordinate' && params.segmentation ) {
+        if ( !params.transcript_seg_methods.contains(params.segmentation) ) {
+                error "Error: Invalid segmentation method: ${params.segmentation} provided for the `coordinate` based mode. Options: ${params.transcript_seg_methods}"
+        }
     }
 
     // check if --relabel_genes is true but --gene_panel is not provided
