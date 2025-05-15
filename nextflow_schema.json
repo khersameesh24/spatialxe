@@ -75,23 +75,23 @@
             "properties": {
                 "generate_preview": {
                     "type": "boolean",
-                    "description": "Wether to generate a preview of the dataset with the transcripts.csv.gz."
+                    "description": "Whether to generate a preview of the dataset with the transcripts.csv.gz."
                 },
                 "segmentation_refinement": {
                     "type": "boolean",
-                    "description": "Wether to run refinement on the image-based segmentation methods. Runs coordinate-based methods after the initial image-based segmentation run."
+                    "description": "Whether to run refinement on the image-based segmentation methods. Runs coordinate-based methods after the initial image-based segmentation run."
                 },
                 "relabel_genes": {
                     "type": "boolean",
-                    "description": "Wether to relabel genes with gene_panel.json file. True when gene_panel is provided."
+                    "description": "Whether to relabel genes with gene_panel.json file. True when gene_panel is provided."
                 },
                 "xeniumranger_only": {
                     "type": "boolean",
-                    "description": "Wether to run vanilla xeniumranger workflow."
+                    "description": "Whether to run vanilla xeniumranger workflow."
                 },
                 "nucleus_segmentation_only": {
                     "type": "boolean",
-                    "description": "Wether to only run nucleus segmentation."
+                    "description": "Whether to only run nucleus segmentation."
                 },
                 "expansion_distance": {
                     "type": "integer",
@@ -115,21 +115,24 @@
                 },
                 "sharpen_tiff": {
                     "type": "boolean",
-                    "description": "Wether to enhance the morphology.ome.tif file."
+                    "description": "Whether to enhance the morphology.ome.tif file."
                 },
                 "segger_accelerator": {
                     "type": "string",
                     "default": "cpu",
+                    "enum": ["cpu", "cuda"],
                     "description": "Device used for training. (e.g., cuda for GPU or cpu)"
                 },
                 "segger_knn_method": {
                     "type": "string",
                     "default": "kd_tree",
+                    "enum": ["kd_tree", "cuda"],
                     "description": "Method for KNN computation. (e.g., cuda for GPU-based computation)"
                 },
                 "cellpose_model": {
                     "type": "string",
                     "default": "nuclei",
+                    "enum": ["nuclei", "cyto3"],
                     "description": "Model to use for running or starting training. (eg. cyto3 or nuclei)"
                 },
                 "format": {
@@ -167,20 +170,20 @@
                 },
                 "features": {
                     "type": "string",
-                    "description": "List of features to be passed to the ficture method."
+                    "description": "List of features to be passed to the ficture method. (eg: TP53,OCIAD1,BCAS3,SOX)"
                 },
                 "baysor_run_image": {
                     "type": "boolean",
                     "default": true,
-                    "description": "Wether to run bayor with image/segmentation-mask."
+                    "description": "Whether to run bayor with image/segmentation-mask."
                 },
                 "baysor_run_transcripts": {
                     "type": "boolean",
-                    "description": "Wether to run baysor with transcripts.csv.gz."
+                    "description": "Whether to run baysor with transcripts.csv.gz."
                 },
                 "baysor_preview": {
                     "type": "boolean",
-                    "description": "Wether to create a preview of the dataset with transcripts.csv.gz."
+                    "description": "Whether to create a preview of the dataset with transcripts.csv.gz."
                 }
             }
         },
