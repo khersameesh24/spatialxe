@@ -16,6 +16,9 @@ include { paramsSummaryMap                                 } from 'plugin/nf-sch
 // nf-core modules
 include { UNTAR                                            } from '../modules/nf-core/untar/main'
 
+// testdata stagign subworkflow
+include { STAGE_TESTDATA                                   } from '../subworkflows/local/utils_stage_testdata/main'
+
 // coordinate-based segmentation subworklfows
 include { SEGGER_CREATE_TRAIN_PREDICT                      } from '../subworkflows/local/segger_create_train_predict/main'
 include { PROSEG_PRESET_PROSEG2BAYSOR                      } from '../subworkflows/local/proseg_preset_proseg2baysor/main'
@@ -61,80 +64,83 @@ workflow SPATIALXE {
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     */
 
-    ch_versions         = Channel.empty()
-    ch_multiqc_files    = Channel.empty()
-    ch_bundle           = Channel.empty()
-    ch_raw_bundle       = Channel.empty()
-    ch_gene_panel       = Channel.empty()
-    ch_redefined_bundle = Channel.empty()
+    ch_versions            = Channel.empty()
+    ch_multiqc_files       = Channel.empty()
+    ch_bundle              = Channel.empty()
+    ch_bundle_path         = Channel.empty()
+    ch_raw_bundle          = Channel.empty()
+    ch_gene_panel          = Channel.empty()
+    ch_transcripts_parquet = Channel.empty()
+    ch_redefined_bundle    = Channel.empty()
+    ch_config              = Channel.empty()
 
-    // get samplesheet fields
-    ch_bundle_path = ch_samplesheet.map { meta, bundle, _image ->
-        return [ meta, file(bundle)]
-    }
-
-    // get xenium bundle files
-    ch_bundle = ch_samplesheet.map { meta, bundle, _image ->
-        def bundle_files = file(bundle).toList().collect()
-        return [meta, bundle_files]
-    }
-
-    // get transcript.csv.gz
-    ch_transcripts = ch_samplesheet.map { meta, bundle, _image ->
-        def transcripts_csv = file(bundle.replaceFirst(/\/$/, '') + "/transcripts.csv.gz")
-        return [ meta, transcripts_csv ]
-    }
-
-    // get transcript.parquet
-    ch_transcripts_parquet = ch_samplesheet.map { meta, bundle, _image ->
-        def transcripts_parquet = file(bundle.replaceFirst(/\/$/, '') + "/transcripts.parquet")
-        return [ meta, transcripts_parquet ]
-    }
-
-    // get morphology.ome.tif
-    ch_image = ch_samplesheet.map { meta, bundle, image ->
-        def morphology_img = image ? file(image) : file(bundle.replaceFirst(/\/$/, '') + "morphology.ome.tif")
-        return [ meta, morphology_img ]
-    }
-
-    // get baysor xenium config
-    ch_config = Channel.fromPath("${projectDir}/assets/config/xenium.toml", checkIfExists: true)
-
-    // get gene_panel.json if provided with --gene_panel, sets relabel_genes to true
-    if (( params.gene_panel )) {
-
-        params.relabel_genes = true
-        ch_gene_panel = Channel.fromPath(params.gene_panel, checkIfExists: true)
-
-    } else {
-
-        // gene panel to use if only --relabel_genes is provided
-        ch_gene_panel = ch_samplesheet.map { meta, bundle, _image ->
-            def gene_panel = file(bundle.replaceFirst(/\/$/, '') + "/gene_panel.json")
-            return [ meta, gene_panel ]
-        }
-    }
 
     /*
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        SPATIALXE - TESTDATA STAGING
+        SPATIALXE - DATA STAGING
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     */
 
     // check if the run is with test profile
     if ( workflow.profile.contains('test') ) {
 
-        // get testdata bundle
-        UNTAR(ch_bundle)
-        ch_versions = ch_versions.mix( UNTAR.out.versions )
+        STAGE_TESTDATA (
+            ch_samplesheet
+        )
 
-        // update raw bundle channel
-        ch_raw_bundle = UNTAR.out.untar
+        ch_raw_bundle  = STAGE_TESTDATA.out.ch_raw_bundle
+        ch_transcripts = STAGE_TESTDATA.out.ch_transcripts
+        ch_image       = STAGE_TESTDATA.out.ch_image
+        ch_bundle_path = STAGE_TESTDATA.out.ch_bundle_path
 
     } else {
 
-        // for all other run. profiles
-        ch_raw_bundle = ch_bundle
+        // get samplesheet fields
+        ch_bundle_path = ch_samplesheet.map { meta, bundle, _image ->
+            return [ meta, file(bundle)]
+        }
+
+        // get xenium bundle files
+        ch_bundle = ch_samplesheet.map { meta, bundle, _image ->
+            def bundle_files = file(bundle).toList().collect()
+            return [meta, bundle_files]
+        }
+
+        // get transcript.csv.gz
+        ch_transcripts = ch_samplesheet.map { meta, bundle, _image ->
+            def transcripts_csv = file(bundle.replaceFirst(/\/$/, '') + "/transcripts.csv.gz")
+            return [ meta, transcripts_csv ]
+        }
+
+        // get transcript.parquet
+        ch_transcripts_parquet = ch_samplesheet.map { meta, bundle, _image ->
+            def transcripts_parquet = file(bundle.replaceFirst(/\/$/, '') + "/transcripts.parquet")
+            return [ meta, transcripts_parquet ]
+        }
+
+        // get morphology.ome.tif
+        ch_image = ch_samplesheet.map { meta, bundle, image ->
+            def morphology_img = image ? file(image) : file(bundle.replaceFirst(/\/$/, '') + "morphology.ome.tif")
+            return [ meta, morphology_img ]
+        }
+
+        // get baysor xenium config
+        ch_config = Channel.fromPath("${projectDir}/assets/config/xenium.toml", checkIfExists: true)
+
+        // get gene_panel.json if provided with --gene_panel, sets relabel_genes to true
+        if (( params.gene_panel )) {
+
+            params.relabel_genes = true
+            ch_gene_panel = Channel.fromPath(params.gene_panel, checkIfExists: true)
+
+        } else {
+
+            // gene panel to use if only --relabel_genes is provided
+            ch_gene_panel = ch_samplesheet.map { meta, bundle, _image ->
+                def gene_panel = file(bundle.replaceFirst(/\/$/, '') + "/gene_panel.json")
+                return [ meta, gene_panel ]
+            }
+        }
     }
 
     /*
