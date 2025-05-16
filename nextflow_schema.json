@@ -10,7 +10,7 @@
             "type": "object",
             "fa_icon": "fas fa-terminal",
             "description": "Define where the pipeline should find input data and save output data.",
-            "required": ["input", "outdir"],
+            "required": ["input", "outdir", "mode"],
             "properties": {
                 "input": {
                     "type": "string",
@@ -29,10 +29,15 @@
                     "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
                     "fa_icon": "fas fa-folder-open"
                 },
+                "mode": {
+                    "type": "string",
+                    "description": "Mode in which the pipeline is to be run. Either image-based or coordinate-based approach.",
+                    "enum": ["image", "coordinate"]
+                },
                 "segmentation": {
                     "type": "string",
                     "enum": ["cellpose", "xeniumranger", "baysor", "proseg", "segger"],
-                    "description": "Segmentation method to run"
+                    "description": "Segmentation method to run."
                 },
                 "gene_panel": {
                     "type": "string",
@@ -41,11 +46,11 @@
                 },
                 "qupath_polygons": {
                     "type": "string",
-                    "description": "Polygon segmentation results in GeoJSON format from QuPath"
+                    "description": "Polygon segmentation results in GeoJSON format from QuPath."
                 },
                 "alignment_csv": {
                     "type": "string",
-                    "description": "Image alignment file containing similarity transform matrix (e.g., the _imagealignment.csv file exported from Xenium Explorer)",
+                    "description": "Image alignment file containing similarity transform matrix. (e.g., the _imagealignment.csv file exported from Xenium Explorer)",
                     "format": "file-path"
                 },
                 "email": {
@@ -65,37 +70,28 @@
         "segmentation_options": {
             "title": "Segmentation options",
             "type": "object",
-            "description": "",
+            "description": "Options for the segmentation layer of the spatialxe pipeline",
             "default": "",
             "properties": {
-                "image_based": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Wether to run image-based segmentation methods"
-                },
-                "coordinate_based": {
-                    "type": "boolean",
-                    "description": "Wether to run coordinate-based segmentation methods"
-                },
                 "generate_preview": {
                     "type": "boolean",
-                    "description": "Wether to generate a preview of the dataset with the transcripts.csv.gz"
+                    "description": "Whether to generate a preview of the dataset with the transcripts.csv.gz."
                 },
                 "segmentation_refinement": {
                     "type": "boolean",
-                    "description": "Wether to run refinement on the image-based segmentation methods. Runs coordinate-based methods after the initial image-based segmentation run"
+                    "description": "Whether to run refinement on the image-based segmentation methods. Runs coordinate-based methods after the initial image-based segmentation run."
                 },
                 "relabel_genes": {
                     "type": "boolean",
-                    "description": "Wether to relabel genes with gene_panel.json file. True when gene_panel is provided"
+                    "description": "Whether to relabel genes with gene_panel.json file. True when gene_panel is provided."
                 },
                 "xeniumranger_only": {
                     "type": "boolean",
-                    "description": "Wether to run vanilla xeniumranger workflow"
+                    "description": "Whether to run vanilla xeniumranger workflow."
                 },
                 "nucleus_segmentation_only": {
                     "type": "boolean",
-                    "description": "Wether to only run nucleus segmentation"
+                    "description": "Whether to only run nucleus segmentation."
                 },
                 "expansion_distance": {
                     "type": "integer",
@@ -105,7 +101,7 @@
                 "dapi_filter": {
                     "type": "integer",
                     "default": 100,
-                    "description": "Minimum intensity in photoelectrons (pe) to filter nuclei. Default: 100 (appropriate range of values is 0 to 99th percentile of image stack or 1000, whichever is larger)"
+                    "description": "Minimum intensity in photoelectrons (pe) to filter nuclei. Default: 100. (appropriate range of values is 0 to 99th percentile of image stack or 1000, whichever is larger)"
                 },
                 "interior_stain": {
                     "type": "boolean",
@@ -119,27 +115,30 @@
                 },
                 "sharpen_tiff": {
                     "type": "boolean",
-                    "description": "Wether to enhance the morphology.ome.tif file"
+                    "description": "Whether to enhance the morphology.ome.tif file."
                 },
                 "segger_accelerator": {
                     "type": "string",
                     "default": "cpu",
-                    "description": "Device used for training (e.g., cuda for GPU or cpu)"
+                    "enum": ["cpu", "cuda"],
+                    "description": "Device used for training. (e.g., cuda for GPU or cpu)"
                 },
                 "segger_knn_method": {
                     "type": "string",
                     "default": "kd_tree",
-                    "description": "Method for KNN computation (e.g., cuda for GPU-based computation)"
+                    "enum": ["kd_tree", "cuda"],
+                    "description": "Method for KNN computation. (e.g., cuda for GPU-based computation)"
                 },
                 "cellpose_model": {
                     "type": "string",
                     "default": "nuclei",
-                    "description": "Model to use for running or starting training (eg. cyto3)"
+                    "enum": ["nuclei", "cyto3"],
+                    "description": "Model to use for running or starting training. (eg. cyto3 or nuclei)"
                 },
                 "format": {
                     "type": "string",
                     "default": "xenium",
-                    "description": "Preset value for the proseg segmentation method"
+                    "description": "Preset value for the proseg segmentation method."
                 },
                 "image_seg_methods": {
                     "type": "array",
@@ -147,7 +146,7 @@
                         "type": "string",
                         "enum": ["cellpose", "xeniumranger", "baysor"]
                     },
-                    "description": "List of image-based segmentation methods"
+                    "description": "List of image-based segmentation methods."
                 },
                 "transcript_seg_methods": {
                     "type": "array",
@@ -155,7 +154,7 @@
                         "type": "string",
                         "enum": ["proseg", "segger", "baysor"]
                     },
-                    "description": "List of transcript-based segmentation methods"
+                    "description": "List of transcript-based segmentation methods."
                 },
                 "segfree_methods": {
                     "type": "array",
@@ -163,28 +162,28 @@
                         "type": "string",
                         "enum": ["ficture", "baysor"]
                     },
-                    "description": "List of segmentation-free methods"
+                    "description": "List of segmentation-free methods."
                 },
                 "negative_control_regex": {
                     "type": "string",
-                    "description": "Regex used to identify or match negative control samples in a dataset"
+                    "description": "Regex used to identify or match negative control samples in a dataset."
                 },
                 "features": {
                     "type": "string",
-                    "description": "List of features to be passed to the ficture method"
+                    "description": "List of features to be passed to the ficture method. (eg: TP53,OCIAD1,BCAS3,SOX)"
                 },
                 "baysor_run_image": {
                     "type": "boolean",
                     "default": true,
-                    "description": "Wether to run bayor with image/segmentation-mask"
+                    "description": "Whether to run bayor with image/segmentation-mask."
                 },
                 "baysor_run_transcripts": {
                     "type": "boolean",
-                    "description": "Wether to run baysor with transcripts.csv.gz"
+                    "description": "Whether to run baysor with transcripts.csv.gz."
                 },
                 "baysor_preview": {
                     "type": "boolean",
-                    "description": "Wether to create a preview of the dataset with transcripts.csv.gz"
+                    "description": "Whether to create a preview of the dataset with transcripts.csv.gz."
                 }
             }
         },
@@ -237,7 +236,7 @@
                 "test_data_base": {
                     "type": "string",
                     "default": "https://raw.githubusercontent.com/nf-core/test-datasets/spatialxe",
-                    "description": "Base path / URL for data used in the test profiles"
+                    "description": "Base path / URL for data used in the test profiles."
                 }
             }
         },

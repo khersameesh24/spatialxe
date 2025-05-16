@@ -6,6 +6,7 @@ process BAYSOR_PREVIEW {
 
     input:
     tuple val(meta), path(transcripts)
+    path(config)
 
     output:
     tuple val(meta), path("preview.html"), emit: preview_html
@@ -21,19 +22,16 @@ process BAYSOR_PREVIEW {
         error "BAYSOR_PREVIEW module does not support Conda. Please use Docker / Singularity / Podman instead."
     }
     def args = task.ext.args ?: ''
-    def VERSION = "${params.version}"
 
     """
-    echo "$task.baysor_xenium_config" > xenium.toml
-
     baysor preview \\
     ${transcripts} \\
-    --config xenium.toml \\
+    --config ${config} \\
     ${args}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        baysor: $VERSION
+        baysor: 0.7.1
     END_VERSIONS
     """
 
@@ -42,7 +40,6 @@ process BAYSOR_PREVIEW {
     if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
         error "BAYSOR_PREVIEW module does not support Conda. Please use Docker / Singularity / Podman instead."
     }
-    def VERSION = "${params.version}"
 
     """
     touch preview.html
@@ -50,7 +47,7 @@ process BAYSOR_PREVIEW {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        baysor: $VERSION
+        baysor: 0.7.1
     END_VERSIONS
     """
 }

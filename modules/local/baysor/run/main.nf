@@ -7,6 +7,7 @@ process BAYSOR_RUN {
     input:
     tuple val(meta), path(transcripts)
     path(prior_segmentation)
+    path(config)
     val(scale)
 
     output:
@@ -18,7 +19,6 @@ process BAYSOR_RUN {
     path("*.loom")                           , emit: loom
     path("*.html")                           , emit: htmls
     path("segmentation_cell_stats.csv")      , emit: stats
-    path("xenium.toml")                      , emit: config
     path("versions.yml")                     , emit: versions
 
     when:
@@ -34,20 +34,18 @@ process BAYSOR_RUN {
     def scaling_factor = scale ? "--scale=${scale}": ""
 
     """
-    echo "${task.baysor_xenium_config}" > xenium.toml
-
     baysor run \\
     ${transcripts} \\
     ${prior_seg} \\
     ${scaling_factor} \\
+    --config=${config} \\
     --plot \\
-    --config xenium.toml \\
     --polygon-format=GeometryCollectionLegacy \\
     ${args}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        baysor: ${task.version}
+        baysor: 0.7.1
     END_VERSIONS
     """
 
@@ -67,7 +65,7 @@ process BAYSOR_RUN {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        baysor: ${task.version}
+        baysor: 0.7.1
     END_VERSIONS
     """
 }

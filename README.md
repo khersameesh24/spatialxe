@@ -40,20 +40,35 @@ On release, automated continuous integration tests run the pipeline on a full-si
 
 ```csv
 sample,bundle,image
-test_sample,/path/to/xenium-bundle/,/path/to/morphology.ome.tif
+test_sample,/path/to/xenium-bundle,/path/to/morphology.ome.tif
 ```
 
 Now, you can run the pipeline using:
 
 <!-- TODO nf-core: update the following command to include all required parameters for a minimal example -->
 
+## Run image-based segmentation mode <br>
+
+`CELLPOSE -> BAYSOR -> XR-IMPORT_SEGMENTATION -> SPATIALDATA -> QC`
+
 ```bash
 nextflow run nf-core/spatialxe \
    -profile <docker/singularity/.../institute> \
    --input samplesheet.csv \
    --outdir <OUTDIR> \
-   --imgage_based \
-   --segmentation cellpose
+   --mode image
+```
+
+## Run coordinate-based segmentation mode <br>
+
+`PROSEG -> BAYSOR -> XR-IMPORT_SEGMENTATION -> SPATIALDATA -> QC`
+
+```bash
+nextflow run nf-core/spatialxe \
+   -profile <docker/singularity/.../institute> \
+   --input samplesheet.csv \
+   --outdir <OUTDIR> \
+   --mode coordinate
 ```
 
 > [!WARNING]
@@ -69,7 +84,7 @@ For more details about the output files and reports, please refer to the
 
 ## Credits
 
-nf-core/spatialxe was originally written by [Sameesh Kher](https://github.com/khersameesh24) and  [Florian Heyl](https://github.com/heylf).
+nf-core/spatialxe was originally written by [Sameesh Kher](https://github.com/khersameesh24) and [Florian Heyl](https://github.com/heylf).
 
 We thank the following people for their extensive assistance in the development of this pipeline:
 

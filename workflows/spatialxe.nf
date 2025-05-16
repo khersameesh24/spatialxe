@@ -16,20 +16,24 @@ include { paramsSummaryMap                                 } from 'plugin/nf-sch
 // nf-core modules
 include { UNTAR                                            } from '../modules/nf-core/untar/main'
 
+// testdata stagign subworkflow
+include { STAGE_TESTDATA                                   } from '../subworkflows/local/utils_stage_testdata/main'
+
 // coordinate-based segmentation subworklfows
 include { SEGGER_CREATE_TRAIN_PREDICT                      } from '../subworkflows/local/segger_create_train_predict/main'
 include { PROSEG_PRESET_PROSEG2BAYSOR                      } from '../subworkflows/local/proseg_preset_proseg2baysor/main'
-include { FICTURE_PREPROCESS_MODEL                         } from '../subworkflows/local/ficture_preprocess_model/main'
 include { BAYSOR_GENERATE_PREVIEW                          } from '../subworkflows/local/baysor_generate_preview/main'
-include { BAYSOR_RUN_MORPHOLOGY_OME_TIF                    } from '../subworkflows/local/baysor_run_morphology_ome_tif/main'
 include { BAYSOR_RUN_TRANSCRIPTS_CSV                       } from '../subworkflows/local/baysor_run_transcripts_csv/main'
-include { BAYSOR_GENERATE_SEGFREE                          } from '../subworkflows/local/baysor_generate_segfree/main'
-
 
 // image-based segmentation subworklfows
+include { BAYSOR_RUN_MORPHOLOGY_OME_TIF                    } from '../subworkflows/local/baysor_run_morphology_ome_tif/main'
 include { CELLPOSE_RESOLIFT_MORPHOLOGY_OME_TIF             } from '../subworkflows/local/cellpose_resolift_morphology_ome_tif/main'
-include { XENIUMRANGER_RESEGMENT_MORPHOLOGY_OME_TIF        } from '../subworkflows/local/xeniumranger_resegment_morphology_ome_tif/main'
 include { CELLPOSE_BAYSOR_IMPORT_SEGMENTATION              } from '../subworkflows/local/cellpose_baysor_import_segmentation/main'
+include { XENIUMRANGER_RESEGMENT_MORPHOLOGY_OME_TIF        } from '../subworkflows/local/xeniumranger_resegment_morphology_ome_tif/main'
+
+// segmentation-free subworkflows
+include { BAYSOR_GENERATE_SEGFREE                          } from '../subworkflows/local/baysor_generate_segfree/main'
+include { FICTURE_PREPROCESS_MODEL                         } from '../subworkflows/local/ficture_preprocess_model/main'
 
 // xeniumranger subworkflows
 include { XENIUMRANGER_RELABEL_RESEGMENT                   } from '../subworkflows/local/xeniumranger_relabel_resegment/main'
@@ -40,7 +44,6 @@ include { SPATIALDATA_WRITE_META_MERGE                     } from '../subworkflo
 
 // TODO qc layer subworkflows
 
-// TODO metadata layer subworkflows
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -61,55 +64,84 @@ workflow SPATIALXE {
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     */
 
-    ch_versions         = Channel.empty()
-    ch_multiqc_files    = Channel.empty()
-    ch_raw_bundle       = Channel.empty()
-    ch_gene_panel       = Channel.empty()
-    ch_redefined_bundle = Channel.empty()
+    ch_versions            = Channel.empty()
+    ch_multiqc_files       = Channel.empty()
+    ch_bundle              = Channel.empty()
+    ch_bundle_path         = Channel.empty()
+    ch_raw_bundle          = Channel.empty()
+    ch_gene_panel          = Channel.empty()
+    ch_transcripts_parquet = Channel.empty()
+    ch_redefined_bundle    = Channel.empty()
+    ch_config              = Channel.empty()
 
-    ch_samplesheet.view()
-
-    // get xenium bundle path from samplesheet
-    ch_bundle = ch_samplesheet.map {
-        meta, bundle, image -> return [ meta, bundle ]
-    }
-
-    // get transcript.csv.gz
-    ch_transcripts = ch_samplesheet.map {
-        meta, bundle, image -> return [ meta, bundle + "/transcripts.csv.gz" ]
-    }
-
-    // get transcript.parquet
-    ch_transcripts_parquet = ch_samplesheet.map {
-        meta, bundle, image -> return [ meta, bundle + "/transcripts.parquet" ]
-    }
-
-    // get morphology.ome.tif
-    ch_image = ch_samplesheet.map {
-            meta, bundle, image -> return [ meta, image ]
-    }
-
-    // get gene_panel.json if provided with --gene_panel
-    if (( params.gene_panel )) {
-        params.relabel_genes = true
-        ch_gene_panel = Channel.fromPath(params.gene_panel, checkIfExists: true)
-    }
 
     /*
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        SPATIALXE - TESTDATA STAGING
+        SPATIALXE - DATA STAGING
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     */
 
-    // check if the run is with test profile
+    // check if its a test run
     if ( workflow.profile.contains('test') ) {
 
-        // get testdata bundle
-        UNTAR(ch_bundle)
-        ch_versions = ch_versions.mix( UNTAR.out.versions )
+        STAGE_TESTDATA (
+            ch_samplesheet
+        )
 
-        // update raw bundle channel
-        ch_raw_bundle = UNTAR.out.untar
+        ch_raw_bundle          = STAGE_TESTDATA.out.ch_raw_bundle
+        ch_transcripts         = STAGE_TESTDATA.out.ch_transcripts_csv
+        ch_transcripts_parquet = STAGE_TESTDATA.out.ch_transcripts_parquet
+        ch_image               = STAGE_TESTDATA.out.ch_image
+        ch_config              = STAGE_TESTDATA.out.ch_config
+
+    } else {
+
+        // get samplesheet fields
+        ch_bundle_path = ch_samplesheet.map { meta, bundle, _image ->
+            return [ meta, file(bundle)]
+        }
+
+        // get xenium bundle files
+        ch_bundle = ch_samplesheet.map { meta, bundle, _image ->
+            def bundle_files = file(bundle).toList().collect()
+            return [meta, bundle_files]
+        }
+
+        // get transcript.csv.gz
+        ch_transcripts = ch_samplesheet.map { meta, bundle, _image ->
+            def transcripts_csv = file(bundle.replaceFirst(/\/$/, '') + "/transcripts.csv.gz")
+            return [ meta, transcripts_csv ]
+        }
+
+        // get transcript.parquet
+        ch_transcripts_parquet = ch_samplesheet.map { meta, bundle, _image ->
+            def transcripts_parquet = file(bundle.replaceFirst(/\/$/, '') + "/transcripts.parquet")
+            return [ meta, transcripts_parquet ]
+        }
+
+        // get morphology.ome.tif
+        ch_image = ch_samplesheet.map { meta, bundle, image ->
+            def morphology_img = image ? file(image) : file(bundle.replaceFirst(/\/$/, '') + "/morphology.ome.tif")
+            return [ meta, morphology_img ]
+        }
+
+        // get baysor xenium config
+        ch_config = Channel.fromPath("${projectDir}/assets/config/xenium.toml", checkIfExists: true)
+
+        // get gene_panel.json if provided with --gene_panel, sets relabel_genes to true
+        if (( params.gene_panel )) {
+
+            params.relabel_genes = true
+            ch_gene_panel = Channel.fromPath(params.gene_panel, checkIfExists: true)
+
+        } else {
+
+            // gene panel to use if only --relabel_genes is provided
+            ch_gene_panel = ch_samplesheet.map { meta, bundle, _image ->
+                def gene_panel = file(bundle.replaceFirst(/\/$/, '') + "/gene_panel.json")
+                return [ meta, gene_panel ]
+            }
+        }
     }
 
     /*
@@ -119,7 +151,7 @@ workflow SPATIALXE {
     */
 
     // run xr relabel if relabel_genes is true, check if gene_panel.json is provided
-    if ( params.relabel_genes && params.gene_panel ) {
+    if ( params.relabel_genes ) {
 
         XENIUMRANGER_RELABEL_RESEGMENT (
             ch_bundle,
@@ -128,10 +160,7 @@ workflow SPATIALXE {
         ch_raw_bundle = XENIUMRANGER_RELABEL_RESEGMENT.out.redefined_bundle
 
     } else {
-
-        ch_raw_bundle = ch_samplesheet.map {
-            meta, bundle, image -> return [ meta, bundle ]
-        }
+        ch_raw_bundle = ch_bundle
     }
 
     /*
@@ -140,13 +169,14 @@ workflow SPATIALXE {
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     */
     // run baysor preview if `generate_preview ` is true
-    if ( params.generate_preview ) {
+    if ( params.generate_preview && params.mode == 'coordinate' ) {
 
         BAYSOR_GENERATE_PREVIEW (
             ch_transcripts,
+            ch_config
         )
         log.info "Preview generated at ${params.outdir}"
-        System.exit(0)
+        exit 0
     }
 
     /*
@@ -154,15 +184,16 @@ workflow SPATIALXE {
         SPATIALXE - IMAGE-BASED SEGMENTATION LAYER
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     */
-    if ( params.image_based ) {
+    if ( params.mode == 'image' ) {
 
         // trigger the default image-based workflow if no method is specified
         if ( !params.segmentation ) {
 
             CELLPOSE_BAYSOR_IMPORT_SEGMENTATION (
                 ch_image,
-                ch_bundle,
-                ch_transcripts
+                ch_bundle_path,
+                ch_transcripts_parquet,
+                ch_config
             )
             ch_redefined_bundle = CELLPOSE_BAYSOR_IMPORT_SEGMENTATION.out.redefined_bundle
         }
@@ -185,7 +216,8 @@ workflow SPATIALXE {
                 BAYSOR_RUN_MORPHOLOGY_OME_TIF (
                     ch_raw_bundle,
                     ch_transcripts,
-                    ch_image
+                    ch_image,
+                    ch_config
                 )
                 ch_redefined_bundle = BAYSOR_RUN_MORPHOLOGY_OME_TIF.out.redefined_bundle
             }
@@ -208,7 +240,7 @@ workflow SPATIALXE {
         SPATIALXE - TRANSCRIPT-BASED SEGMENTATION LAYER
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     */
-    if ( params.coordinate_based ) {
+    if ( params.mode == 'coordinate' ) {
 
         // trigger the default transcripts-based workflow if no method is specified
         if ( !params.segmentation ) {
@@ -251,6 +283,7 @@ workflow SPATIALXE {
                 BAYSOR_RUN_TRANSCRIPTS_CSV (
                     ch_raw_bundle,
                     ch_transcripts,
+                    ch_config,
                     []
                 )
                 ch_redefined_bundle = BAYSOR_RUN_TRANSCRIPTS_CSV.out.redefined_bundle
@@ -276,7 +309,7 @@ workflow SPATIALXE {
 
     /*
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        SPATIALXE - SPATIALDATA LAYER
+        SPATIALXE - SPATIALDATA / METADATA LAYER
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     */
     // run spatialdata modules to generate sd objects
@@ -288,13 +321,6 @@ workflow SPATIALXE {
     /*
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         SPATIALXE - QC LAYER
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    */
-
-
-    /*
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        SPATIALXE - METADATA LAYER
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     */
 

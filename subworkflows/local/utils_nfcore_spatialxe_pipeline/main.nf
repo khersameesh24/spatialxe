@@ -29,9 +29,9 @@ workflow PIPELINE_INITIALISATION {
     version           // boolean: Display version and exit
     validate_params   // boolean: Boolean whether to validate parameters against the schema at runtime
     monochrome_logs   // boolean: Do not use coloured log outputs
-    nextflow_cli_args //   array: List of positional nextflow CLI args
-    outdir            //  string: The output directory where the results will be saved
-    input             //  string: Path to input samplesheet
+    nextflow_cli_args // array: List of positional nextflow CLI args
+    outdir            // string: The output directory where the results will be saved
+    input             // string: Path to input samplesheet
 
     main:
 
@@ -71,17 +71,11 @@ workflow PIPELINE_INITIALISATION {
     //
     // Create channel from input file provided through params.input
     //
-
-    print(params.input)
-
     Channel
-        .fromList(samplesheetToList(params.input, "${projectDir}/assets/schema_input.json"))
+        .fromList(samplesheetToList(input, "${projectDir}/assets/schema_input.json"))
         .map {
             meta, bundle, image -> return [ [id: meta.id], bundle, image ]
         }
-        // .map { samplesheet ->
-        //     validateInputSamplesheet(samplesheet)
-        // }
         .set { ch_samplesheet }
 
     emit:
@@ -149,17 +143,30 @@ workflow PIPELINE_COMPLETION {
 //
 def validateInputParameters() {
 
+    // check if the segmentation method provided is valid for a mode
+    if ( params.mode == 'image' && params.segmentation ) {
+        if ( !params.image_seg_methods.contains(params.segmentation) ) {
+            error "Error: Invalid segmentation method: ${params.segmentation} provided for the `image` based mode. Options: ${params.image_seg_methods}"
+        }
+    }
+
+    if ( params.mode == 'coordinate' && params.segmentation ) {
+        if ( !params.transcript_seg_methods.contains(params.segmentation) ) {
+                error "Error: Invalid segmentation method: ${params.segmentation} provided for the `coordinate` based mode. Options: ${params.transcript_seg_methods}"
+        }
+    }
+
+    // check if --relabel_genes is true but --gene_panel is not provided
+    if ( params.relabel_genes && !params.gene_panel ) {
+        log.warn "Relabel genes is enabled, but gene panel is not provided with the `--gene_panel`. Using `gene_panel.json` in the xenium bundle"
+    }
+
+    // check if --relabel_genes is true but --gene_panel is not provided
+    if ( params.gene_panel && !params.relabel_genes ) {
+        log.warn "Gene panel provided, but relabel genes is disabled. Using `gene_panel.json` only to generate metadata"
+    }
+
 }
-
-//
-// Validate channels from input samplesheet
-//
-// def validateInputSamplesheet(input) {
-//     def metas = input[0]
-//     def bundle = input[1]
-
-//     return [ metas[0], bundle ]
-// }
 
 
 //

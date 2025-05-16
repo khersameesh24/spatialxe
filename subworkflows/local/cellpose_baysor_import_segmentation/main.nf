@@ -12,14 +12,15 @@ workflow CELLPOSE_BAYSOR_IMPORT_SEGMENTATION {
 
     ch_image        // channel: [ val(meta), ["path-to-morphology.ome.tif"] ]
     ch_bundle       // channel: [ val(meta), ["path-to-xenium-bundle"] ]
-    ch_transcripts  // channel: [ val(meta), ["path-to-transcripts.csv.gz"] ]
+    ch_transcripts  // channel: [ val(meta), ["path-to-transcripts.parquet"] ]
+    ch_config       // channel: ["path-to-xenium.toml"]
 
     main:
 
     ch_versions = Channel.empty()
 
     // run cellpose to generate segmentation mask
-    CELLPOSE ( ch_image, params.cellpose_model )
+    CELLPOSE ( ch_image, [])
     ch_versions = ch_versions.mix ( CELLPOSE.out.versions )
 
 
@@ -27,7 +28,7 @@ workflow CELLPOSE_BAYSOR_IMPORT_SEGMENTATION {
     ch_mask = CELLPOSE.out.mask.map {
         _meta, seg_mask -> [ seg_mask ]
     }
-    BAYSOR_RUN ( ch_transcripts, ch_mask, "" )
+    BAYSOR_RUN ( ch_transcripts, ch_mask, ch_config, 30 )
     ch_versions = ch_versions.mix ( BAYSOR_RUN.out.versions )
 
 
@@ -44,7 +45,7 @@ workflow CELLPOSE_BAYSOR_IMPORT_SEGMENTATION {
         [],
         ch_segmentation,
         ch_polygons,
-        "pixel"
+        "microns"
     )
     ch_versions = ch_versions.mix ( XENIUMRANGER_IMPORT_SEGMENTATION.out.versions )
 
