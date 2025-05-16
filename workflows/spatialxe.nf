@@ -81,17 +81,18 @@ workflow SPATIALXE {
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     */
 
-    // check if the run is with test profile
+    // check if its a test run
     if ( workflow.profile.contains('test') ) {
 
         STAGE_TESTDATA (
             ch_samplesheet
         )
 
-        ch_raw_bundle  = STAGE_TESTDATA.out.ch_raw_bundle
-        ch_transcripts = STAGE_TESTDATA.out.ch_transcripts
-        ch_image       = STAGE_TESTDATA.out.ch_image
-        ch_bundle_path = STAGE_TESTDATA.out.ch_bundle_path
+        ch_raw_bundle          = STAGE_TESTDATA.out.ch_raw_bundle
+        ch_transcripts         = STAGE_TESTDATA.out.ch_transcripts_csv
+        ch_transcripts_parquet = STAGE_TESTDATA.out.ch_transcripts_parquet
+        ch_image               = STAGE_TESTDATA.out.ch_image
+        ch_config              = STAGE_TESTDATA.out.ch_config
 
     } else {
 
@@ -120,7 +121,7 @@ workflow SPATIALXE {
 
         // get morphology.ome.tif
         ch_image = ch_samplesheet.map { meta, bundle, image ->
-            def morphology_img = image ? file(image) : file(bundle.replaceFirst(/\/$/, '') + "morphology.ome.tif")
+            def morphology_img = image ? file(image) : file(bundle.replaceFirst(/\/$/, '') + "/morphology.ome.tif")
             return [ meta, morphology_img ]
         }
 
@@ -313,7 +314,7 @@ workflow SPATIALXE {
     */
     // run spatialdata modules to generate sd objects
     SPATIALDATA_WRITE_META_MERGE (
-        ch_bundle_path,
+        ch_raw_bundle,
         ch_redefined_bundle
     )
 
