@@ -17,7 +17,7 @@ include { paramsSummaryMap                                 } from 'plugin/nf-sch
 include { UNTAR                                            } from '../modules/nf-core/untar/main'
 
 // testdata stagign subworkflow
-include { STAGE_TESTDATA                                   } from '../subworkflows/local/utils_stage_testdata/main'
+// include { STAGE_TESTDATA                                   } from '../subworkflows/local/utils_stage_testdata/main'
 
 // coordinate-based segmentation subworklfows
 include { SEGGER_CREATE_TRAIN_PREDICT                      } from '../subworkflows/local/segger_create_train_predict/main'
@@ -70,7 +70,9 @@ workflow SPATIALXE {
     ch_bundle_path         = Channel.empty()
     ch_raw_bundle          = Channel.empty()
     ch_gene_panel          = Channel.empty()
+    ch_transcripts_csv     = Channel.empty()
     ch_transcripts_parquet = Channel.empty()
+    ch_morphology_image    = Channel.empty()
     ch_redefined_bundle    = Channel.empty()
     ch_config              = Channel.empty()
 
@@ -81,66 +83,54 @@ workflow SPATIALXE {
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     */
 
-    // check if its a test run
-    if ( workflow.profile.contains('test') ) {
+    // get sample, xenium bundle and image path
+    ch_bundle_path = ch_samplesheet.map { meta, bundle, _image ->
+        return [ meta, bundle ]
+    }
 
-        STAGE_TESTDATA (
-            ch_samplesheet
-        )
+    // get all files in the xenium bundle in a channel
+    ch_bundle_files = ch_samplesheet.map
+                            { meta, bundle_path, _image ->
+                                def files = file("${bundle_path}/*").collect()
+                                [meta, [files]]
+                            }
 
-        ch_raw_bundle          = STAGE_TESTDATA.out.ch_raw_bundle
-        ch_transcripts         = STAGE_TESTDATA.out.ch_transcripts_csv
-        ch_transcripts_parquet = STAGE_TESTDATA.out.ch_transcripts_parquet
-        ch_image               = STAGE_TESTDATA.out.ch_image
-        ch_config              = STAGE_TESTDATA.out.ch_config
+    // get transcript.csv.gz from the xenium bundle
+    ch_transcripts_csv = ch_samplesheet.map { meta, bundle, _image ->
+        def transcripts_csv = file(bundle.replaceFirst(/\/$/, '') + "/transcripts.csv.gz")
+        return [ meta, transcripts_csv ]
+    }
+    // ch_transcripts_csv.view()
+
+    // get transcript.parquet from the xenium bundle
+    ch_transcripts_parquet = ch_samplesheet.map { meta, bundle, _image ->
+        def transcripts_parquet = file(bundle.replaceFirst(/\/$/, '') + "/transcripts.parquet")
+        return [ meta, transcripts_parquet ]
+    }
+    // ch_transcripts_parquet.view()
+
+    // get morphology.ome.tif from the xenium bundle
+    ch_morphology_image = ch_samplesheet.map { meta, bundle, image ->
+        def morphology_img = image ? file(image) : file(bundle.replaceFirst(/\/$/, '') + "/morphology.ome.tif")
+        return [ meta, morphology_img ]
+    }
+    // ch_morphology_image.view()
+
+    // get baysor xenium config
+    ch_config = Channel.fromPath("${projectDir}/assets/config/xenium.toml", checkIfExists: true)
+
+    // get gene_panel.json if provided with --gene_panel, sets relabel_genes to true
+    if (( params.gene_panel )) {
+
+        params.relabel_genes = true
+        ch_gene_panel = Channel.fromPath(params.gene_panel, checkIfExists: true)
 
     } else {
 
-        // get samplesheet fields
-        ch_bundle_path = ch_samplesheet.map { meta, bundle, _image ->
-            return [ meta, file(bundle)]
-        }
-
-        // get xenium bundle files
-        ch_bundle = ch_samplesheet.map { meta, bundle, _image ->
-            def bundle_files = file(bundle).toList().collect()
-            return [meta, bundle_files]
-        }
-
-        // get transcript.csv.gz
-        ch_transcripts = ch_samplesheet.map { meta, bundle, _image ->
-            def transcripts_csv = file(bundle.replaceFirst(/\/$/, '') + "/transcripts.csv.gz")
-            return [ meta, transcripts_csv ]
-        }
-
-        // get transcript.parquet
-        ch_transcripts_parquet = ch_samplesheet.map { meta, bundle, _image ->
-            def transcripts_parquet = file(bundle.replaceFirst(/\/$/, '') + "/transcripts.parquet")
-            return [ meta, transcripts_parquet ]
-        }
-
-        // get morphology.ome.tif
-        ch_image = ch_samplesheet.map { meta, bundle, image ->
-            def morphology_img = image ? file(image) : file(bundle.replaceFirst(/\/$/, '') + "/morphology.ome.tif")
-            return [ meta, morphology_img ]
-        }
-
-        // get baysor xenium config
-        ch_config = Channel.fromPath("${projectDir}/assets/config/xenium.toml", checkIfExists: true)
-
-        // get gene_panel.json if provided with --gene_panel, sets relabel_genes to true
-        if (( params.gene_panel )) {
-
-            params.relabel_genes = true
-            ch_gene_panel = Channel.fromPath(params.gene_panel, checkIfExists: true)
-
-        } else {
-
-            // gene panel to use if only --relabel_genes is provided
-            ch_gene_panel = ch_samplesheet.map { meta, bundle, _image ->
-                def gene_panel = file(bundle.replaceFirst(/\/$/, '') + "/gene_panel.json")
-                return [ meta, gene_panel ]
-            }
+        // gene panel to use if only --relabel_genes is provided
+        ch_gene_panel = ch_samplesheet.map { meta, bundle, _image ->
+            def gene_panel = file(bundle.replaceFirst(/\/$/, '') + "/gene_panel.json")
+            return [ meta, gene_panel ]
         }
     }
 
@@ -154,7 +144,7 @@ workflow SPATIALXE {
     if ( params.relabel_genes ) {
 
         XENIUMRANGER_RELABEL_RESEGMENT (
-            ch_bundle,
+            ch_bundle_path,
             ch_gene_panel
         )
         ch_raw_bundle = XENIUMRANGER_RELABEL_RESEGMENT.out.redefined_bundle
@@ -172,7 +162,7 @@ workflow SPATIALXE {
     if ( params.generate_preview && params.mode == 'coordinate' ) {
 
         BAYSOR_GENERATE_PREVIEW (
-            ch_transcripts,
+            ch_transcripts_csv,
             ch_config
         )
         log.info "Preview generated at ${params.outdir}"
@@ -190,7 +180,7 @@ workflow SPATIALXE {
         if ( !params.segmentation ) {
 
             CELLPOSE_BAYSOR_IMPORT_SEGMENTATION (
-                ch_image,
+                ch_morphology_image,
                 ch_bundle_path,
                 ch_transcripts_parquet,
                 ch_config
@@ -205,7 +195,7 @@ workflow SPATIALXE {
             if ( params.segmentation == 'xeniumranger' ) {
 
                 XENIUMRANGER_RESEGMENT_MORPHOLOGY_OME_TIF (
-                    ch_raw_bundle
+                    ch_bundle_path
                 )
                 ch_redefined_bundle = XENIUMRANGER_RESEGMENT_MORPHOLOGY_OME_TIF.out.redefined_bundle
             }
@@ -214,9 +204,9 @@ workflow SPATIALXE {
             if ( params.segmentation == 'baysor' ) {
 
                 BAYSOR_RUN_MORPHOLOGY_OME_TIF (
-                    ch_raw_bundle,
-                    ch_transcripts,
-                    ch_image,
+                    ch_bundle_path,
+                    ch_transcripts_csv,
+                    ch_morphology_image,
                     ch_config
                 )
                 ch_redefined_bundle = BAYSOR_RUN_MORPHOLOGY_OME_TIF.out.redefined_bundle
@@ -226,8 +216,8 @@ workflow SPATIALXE {
             if ( params.segmentation == 'cellpose' ) {
 
                 CELLPOSE_RESOLIFT_MORPHOLOGY_OME_TIF (
-                    ch_image,
-                    ch_raw_bundle
+                    ch_morphology_image,
+                    ch_bundle_path
                 )
                 ch_redefined_bundle = CELLPOSE_RESOLIFT_MORPHOLOGY_OME_TIF.out.redefined_bundle
             }
@@ -246,8 +236,8 @@ workflow SPATIALXE {
         if ( !params.segmentation ) {
 
             PROSEG_PRESET_PROSEG2BAYSOR (
-                ch_raw_bundle,
-                ch_transcripts
+                ch_bundle_path,
+                ch_transcripts_csv
             )
             ch_redefined_bundle = PROSEG_PRESET_PROSEG2BAYSOR.out.redefined_bundle
 
@@ -260,8 +250,8 @@ workflow SPATIALXE {
             if ( params.segmentation == 'proseg') {
 
                 PROSEG_PRESET_PROSEG2BAYSOR (
-                    ch_raw_bundle,
-                    ch_transcripts
+                    ch_bundle_path,
+                    ch_transcripts_csv
                 )
                 ch_redefined_bundle = PROSEG_PRESET_PROSEG2BAYSOR.out.redefined_bundle
 
@@ -271,7 +261,7 @@ workflow SPATIALXE {
             if ( params.segmentation == 'segger' ) {
 
                 SEGGER_CREATE_TRAIN_PREDICT (
-                    ch_raw_bundle,
+                    ch_bundle_path,
                     ch_transcripts_parquet
                 )
 
@@ -281,10 +271,9 @@ workflow SPATIALXE {
             if ( params.segmentation == 'baysor' ) {
 
                 BAYSOR_RUN_TRANSCRIPTS_CSV (
-                    ch_raw_bundle,
-                    ch_transcripts,
-                    ch_config,
-                    []
+                    ch_bundle_path,
+                    ch_transcripts_csv,
+                    ch_config
                 )
                 ch_redefined_bundle = BAYSOR_RUN_TRANSCRIPTS_CSV.out.redefined_bundle
             }
@@ -301,7 +290,7 @@ workflow SPATIALXE {
     if  ( params.xeniumranger_only ) {
 
         XENIUMRANGER_IMPORT_SEGMENTATION_REDEFINE_BUNDLE (
-            ch_raw_bundle
+            ch_bundle_path
         )
         ch_redefined_bundle = XENIUMRANGER_IMPORT_SEGMENTATION_REDEFINE_BUNDLE.out.redefined_bundle
     }
@@ -314,7 +303,7 @@ workflow SPATIALXE {
     */
     // run spatialdata modules to generate sd objects
     SPATIALDATA_WRITE_META_MERGE (
-        ch_raw_bundle,
+        ch_bundle_path,
         ch_redefined_bundle
     )
 

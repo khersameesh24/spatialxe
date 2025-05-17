@@ -10,15 +10,15 @@ workflow PROSEG_PRESET_PROSEG2BAYSOR {
 
     take:
 
-    ch_bundle      // channel: [ val(meta), ["xenium-bundle"] ]
-    ch_transcripts // channel: [ val(meta), [ "transcripts.csv.gz" ] ]
+    ch_bundle_path     // channel: [ val(meta), ["path-to-xenium-bundle"] ]
+    ch_transcripts_csv // channel: [ val(meta), [ "transcripts.csv.gz" ] ]
 
     main:
 
     ch_versions = Channel.empty()
 
     // run proseg with the xenium format
-    PROSEG ( ch_transcripts )
+    PROSEG ( ch_transcripts_csv )
     ch_versions = ch_versions.mix( PROSEG.out.versions )
 
 
@@ -33,7 +33,7 @@ workflow PROSEG_PRESET_PROSEG2BAYSOR {
 
     // run xeniumranger import-segmentation
     XENIUMRANGER_IMPORT_SEGMENTATION (
-        ch_bundle,
+        ch_bundle_path,
         [],
         [],
         [],

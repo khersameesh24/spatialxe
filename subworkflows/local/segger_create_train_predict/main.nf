@@ -11,7 +11,7 @@ workflow SEGGER_CREATE_TRAIN_PREDICT {
 
     take:
 
-    ch_basedir              // channel: [ val(meta), [ basedir ] ]
+    ch_basedir              // channel: [ val(meta), [ "basedir" ] ]
     ch_transcripts_parquet  // channel: [ val(meta), [bundle + "/transcripts.parquet"]]
 
     main:

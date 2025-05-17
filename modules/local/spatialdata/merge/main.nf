@@ -6,11 +6,11 @@ process SPATIALDATA_MERGE {
 
     input:
     tuple val(meta), path(ref_bundle, stageAs: "*")
-    tuple val(meta), path(add_bundle, stageAs: "*")
+    path(add_bundle, stageAs: "*")
 
     output:
-    tuple val(meta), path("spatialdata_spatialxe")    , emit: spatialxe_bundle
-    path "versions.yml"                               , emit: versions
+    tuple val(meta), path("spatialdata_spatialxe"), emit: spatialxe_bundle
+    path("versions.yml")                          , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -22,6 +22,7 @@ process SPATIALDATA_MERGE {
     }
 
     def args = task.ext.args ?: ''
+
     template 'merge.py'
 
     stub:

@@ -12,10 +12,10 @@ workflow BAYSOR_RUN_MORPHOLOGY_OME_TIF {
 
     take:
 
-    ch_bundle      // channel: [ val(meta), ["xenium-bundle"] ]
-    ch_transcripts // channel: [ val(meta), ["transcripts.csv.gz"] ]
-    ch_image       // channel: [ val(meta), ["morphology_focus.tiff"] ]
-    ch_config      // channel: ["path-to-xenium.toml"]
+    ch_bundle_path      // channel: [ val(meta), ["path-to-xenium-bundle"] ]
+    ch_transcripts_csv  // channel: [ val(meta), ["path-to-transcripts.csv.gz"] ]
+    ch_morphology_image // channel: [ val(meta), ["path-to-morphology_focus.tiff"] ]
+    ch_config           // channel: ["path-to-xenium.toml"]
 
     main:
 
@@ -31,7 +31,7 @@ workflow BAYSOR_RUN_MORPHOLOGY_OME_TIF {
 
 
     // unzip transcripts.csv.gz
-    GUNZIP ( ch_transcripts )
+    GUNZIP ( ch_transcripts_csv )
     ch_versions = ch_versions.mix ( GUNZIP.out.versions )
 
     ch_unzipped_transcripts = GUNZIP.out.gunzip
@@ -40,7 +40,7 @@ workflow BAYSOR_RUN_MORPHOLOGY_OME_TIF {
     ch_just_image = Channel.empty()
     if ( params.sharpen_tiff ) {
 
-        RESOLIFT ( ch_image )
+        RESOLIFT ( ch_morphology_image )
         ch_versions = ch_versions.mix( RESOLIFT.out.versions )
 
         ch_enhanced_tiff = RESOLIFT.out.enhanced_tiff
@@ -51,7 +51,7 @@ workflow BAYSOR_RUN_MORPHOLOGY_OME_TIF {
     } else {
 
         // use the original morphology tiff from the bundle
-        ch_just_image = ch_image.map {
+        ch_just_image = ch_morphology_image.map {
             _meta, image -> return [ image ]
         }
     }
@@ -71,9 +71,10 @@ workflow BAYSOR_RUN_MORPHOLOGY_OME_TIF {
     }
     ch_polygons2d = BAYSOR_RUN_IMAGE.out.polygons2d
     ch_htmls      = BAYSOR_RUN_IMAGE.out.htmls
+
     // run xeniumranger import-segmentation
     XENIUMRANGER_IMPORT_SEGMENTATION (
-        ch_bundle,
+        ch_bundle_path,
         [],
         [],
         [],

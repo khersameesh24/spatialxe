@@ -10,7 +10,7 @@ include { SPATIALDATA_META                                        } from '../../
 workflow SPATIALDATA_WRITE_META_MERGE {
 
     take:
-    ch_raw_bundle       // channel: [ val(meta), [ "xenium-bundle" ] ]
+    ch_bundle_path      // channel: [ val(meta), [ "path-to-xenium-bundle" ] ]
     ch_redefined_bundle // channel: [ val(meta), [ "redefined-xenium-bundle" ] ]
 
     main:
@@ -18,7 +18,7 @@ workflow SPATIALDATA_WRITE_META_MERGE {
     ch_versions = Channel.empty()
 
     // write spatialdata object from the raw xenium bundle
-    raw_bundle_path = ch_raw_bundle.map { meta, file_path ->
+    raw_bundle_path = ch_bundle_path.map { meta, file_path ->
         return [ meta, file(file_path) ]
     }
     SPATIALDATA_WRITE_RAW_BUNDLE (
@@ -40,17 +40,23 @@ workflow SPATIALDATA_WRITE_META_MERGE {
 
 
     // merge raw & redefined spatialdata objects
+    ch_just_redefined_bundle = ch_redefined_bundle.map {
+        _meta, bundle -> return [ bundle ]
+    }
     SPATIALDATA_MERGE_RAW_REDEFINED (
         SPATIALDATA_WRITE_RAW_BUNDLE.out.spatialdata,
-        SPATIALDATA_WRITE_REDEFINED_BUNDLE.out.spatialdata
+        ch_just_redefined_bundle
     )
     ch_versions = ch_versions.mix ( SPATIALDATA_MERGE_RAW_REDEFINED.out.versions )
 
 
     // write metadata with spatialdata object
+    ch_just_bundle_path = ch_bundle_path.map {
+        _meta, bundle -> return [ bundle ]
+    }
     SPATIALDATA_META (
         SPATIALDATA_MERGE_RAW_REDEFINED.out.spatialxe_bundle,
-        ch_raw_bundle
+        ch_just_bundle_path
     )
     ch_versions = ch_versions.mix ( SPATIALDATA_META.out.versions )
 

@@ -9,26 +9,29 @@ workflow XENIUMRANGER_RESEGMENT_MORPHOLOGY_OME_TIF {
 
     take:
 
-    ch_bundle  // channel: [ val(meta), ["xenium-bundle"] ]
+    ch_bundle_path  // channel: [ val(meta), ["path-to-xenium-bundle"] ]
 
     main:
 
     ch_versions = Channel.empty()
 
     // run resegment with changed config values
-    XENIUMRANGER_RESEGMENT ( ch_bundle )
+    XENIUMRANGER_RESEGMENT ( ch_bundle_path )
     ch_versions = ch_versions.mix( XENIUMRANGER_RESEGMENT.out.versions )
 
 
     // run import segmentation to redine
-    cells = ch_bundle.map {
+    nuclei = XENIUMRANGER_RESEGMENT.out.bundle.map {
+        _meta, bundle -> return [ bundle + "/cells.zarr.zip" ]
+    }
+    cells  = XENIUMRANGER_RESEGMENT.out.bundle.map {
         _meta, bundle -> return [ bundle + "/cells.zarr.zip" ]
     }
 
     XENIUMRANGER_IMPORT_SEGMENTATION (
         XENIUMRANGER_RESEGMENT.out.bundle,
         [],
-        cells,
+        nuclei,
         cells,
         [],
         [],

@@ -11,10 +11,9 @@ workflow BAYSOR_RUN_TRANSCRIPTS_CSV {
 
     take:
 
-    ch_bundle      // channel: [ val(meta), ["xenium-bundle"] ]
-    ch_transcripts // channel: [ val(meta), ["transcripts.csv.gz"] ]
-    ch_image       // channel: [ val(meta), ["morphology_focus.tiff"] ]
-    ch_config      // channel: ["path-to-xenium.toml"]
+    ch_bundle_path     // channel: [ val(meta), ["xenium-bundle"] ]
+    ch_transcripts_csv // channel: [ val(meta), ["transcripts.csv.gz"] ]
+    ch_config          // channel: ["path-to-xenium.toml"]
 
     main:
 
@@ -29,7 +28,7 @@ workflow BAYSOR_RUN_TRANSCRIPTS_CSV {
 
 
     // unzip transcripts.csv.gz
-    GUNZIP ( ch_transcripts )
+    GUNZIP ( ch_transcripts_csv )
     ch_versions = ch_versions.mix ( GUNZIP.out.versions )
 
     ch_unzipped_transcripts = GUNZIP.out.gunzip
@@ -52,7 +51,7 @@ workflow BAYSOR_RUN_TRANSCRIPTS_CSV {
 
     // run xeniumranger import-segmentation
     XENIUMRANGER_IMPORT_SEGMENTATION (
-        ch_bundle,
+        ch_bundle_path,
         [],
         [],
         [],

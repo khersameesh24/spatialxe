@@ -58,10 +58,12 @@ process BAYSOR_RUN {
     """
     touch segmentation.csv
     touch segmentation_polygons_2d.json
+    touch segmentation_polygons_3d.json
     touch segmentation_log.log
     touch segmentation_counts.loom
     touch segmentation_cell_stats.csv
     touch segmentation_params.dump.toml
+    touch segmentation_run.html
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
