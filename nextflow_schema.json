@@ -53,6 +53,11 @@
                     "description": "Image alignment file containing similarity transform matrix. (e.g., the _imagealignment.csv file exported from Xenium Explorer)",
                     "format": "file-path"
                 },
+                "cellpose_model": {
+                    "type": "string",
+                    "description": "Model to use for running or starting training.",
+                    "format": "file-path"
+                },
                 "email": {
                     "type": "string",
                     "description": "Email address for completion summary.",
@@ -128,12 +133,6 @@
                     "default": "kd_tree",
                     "enum": ["kd_tree", "cuda"],
                     "description": "Method for KNN computation. (e.g., cuda for GPU-based computation)"
-                },
-                "cellpose_model": {
-                    "type": "string",
-                    "default": "nuclei",
-                    "enum": ["nuclei", "cyto3"],
-                    "description": "Model to use for running or starting training. (eg. cyto3 or nuclei)"
                 },
                 "format": {
                     "type": "string",
