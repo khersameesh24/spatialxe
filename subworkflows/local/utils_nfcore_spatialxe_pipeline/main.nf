@@ -152,18 +152,30 @@ def validateInputParameters() {
 
     if ( params.mode == 'coordinate' && params.segmentation ) {
         if ( !params.transcript_seg_methods.contains(params.segmentation) ) {
-                error "Error: Invalid segmentation method: ${params.segmentation} provided for the `coordinate` based mode. Options: ${params.transcript_seg_methods}"
+                error "Error: Invalid segmentation method: `${params.segmentation}` provided for the `coordinate` based mode. Options: ${params.transcript_seg_methods}"
         }
     }
 
     // check if --relabel_genes is true but --gene_panel is not provided
     if ( params.relabel_genes && !params.gene_panel ) {
-        log.warn "Relabel genes is enabled, but gene panel is not provided with the `--gene_panel`. Using `gene_panel.json` in the xenium bundle"
+        log.warn "Relabel genes is enabled, but gene panel is not provided with the `--gene_panel`. Using `gene_panel.json` in the xenium bundle."
     }
 
     // check if --relabel_genes is true but --gene_panel is not provided
     if ( params.gene_panel && !params.relabel_genes ) {
-        log.warn "Gene panel provided, but relabel genes is disabled. Using `gene_panel.json` only to generate metadata"
+        log.warn "Gene panel provided, but relabel genes is disabled. Using `gene_panel.json` only to generate metadata."
+    }
+
+    // check if segmentation method is xeniumranger and nucleus_ony_segmentation is enabled
+    if ( params.segmentation == 'xeniumranger' && !params.nucleus_segmentation_only ) {
+        log.warn "Nucleus segmentation is disabled. Running xeniumranger resegment module to redefine xenium bundle without nucleus segmentation."
+        log.warn "Use --nucleus_segmentation_only to enable nucleus segmentation to redefine xenium bundle with import-segmentation module."
+    }
+
+    if ( params.mode == 'image' && params.segmentation == 'baysor' ) {
+        if ( !params.segmentation_mask ) {
+            error "Error: Missing path to segmentation mask. Image-based segmentation with the `baysor` method requires a segmentation mask with the `--segmentation_mask` option."
+        }
     }
 
 }

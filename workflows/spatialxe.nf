@@ -26,7 +26,7 @@ include { BAYSOR_GENERATE_PREVIEW                          } from '../subworkflo
 include { BAYSOR_RUN_TRANSCRIPTS_CSV                       } from '../subworkflows/local/baysor_run_transcripts_csv/main'
 
 // image-based segmentation subworklfows
-include { BAYSOR_RUN_MORPHOLOGY_OME_TIF                    } from '../subworkflows/local/baysor_run_morphology_ome_tif/main'
+include { BAYSOR_RUN_PRIOR_SEGMENTATION_MASK               } from '../subworkflows/local/baysor_run_prior_segmentation_mask/main'
 include { CELLPOSE_RESOLIFT_MORPHOLOGY_OME_TIF             } from '../subworkflows/local/cellpose_resolift_morphology_ome_tif/main'
 include { CELLPOSE_BAYSOR_IMPORT_SEGMENTATION              } from '../subworkflows/local/cellpose_baysor_import_segmentation/main'
 include { XENIUMRANGER_RESEGMENT_MORPHOLOGY_OME_TIF        } from '../subworkflows/local/xeniumranger_resegment_morphology_ome_tif/main'
@@ -100,24 +100,26 @@ workflow SPATIALXE {
         def transcripts_csv = file(bundle.replaceFirst(/\/$/, '') + "/transcripts.csv.gz")
         return [ meta, transcripts_csv ]
     }
-    // ch_transcripts_csv.view()
 
     // get transcript.parquet from the xenium bundle
     ch_transcripts_parquet = ch_samplesheet.map { meta, bundle, _image ->
         def transcripts_parquet = file(bundle.replaceFirst(/\/$/, '') + "/transcripts.parquet")
         return [ meta, transcripts_parquet ]
     }
-    // ch_transcripts_parquet.view()
 
     // get morphology.ome.tif from the xenium bundle
     ch_morphology_image = ch_samplesheet.map { meta, bundle, image ->
         def morphology_img = image ? file(image) : file(bundle.replaceFirst(/\/$/, '') + "/morphology.ome.tif")
         return [ meta, morphology_img ]
     }
-    // ch_morphology_image.view()
 
     // get baysor xenium config
     ch_config = Channel.fromPath("${projectDir}/assets/config/xenium.toml", checkIfExists: true)
+
+    // get segmentation mask if provided with --segmentation_mask for the baysor method
+    if ( params.segmentation_mask ) {
+        ch_segmentation_mask = Channel.fromPath(params.segmentation_mask, checkIfExists: true)
+    }
 
     // get gene_panel.json if provided with --gene_panel, sets relabel_genes to true
     if (( params.gene_panel )) {
@@ -203,13 +205,13 @@ workflow SPATIALXE {
             // run baysor run with morphology_ome.tif
             if ( params.segmentation == 'baysor' ) {
 
-                BAYSOR_RUN_MORPHOLOGY_OME_TIF (
+                BAYSOR_RUN_PRIOR_SEGMENTATION_MASK (
                     ch_bundle_path,
                     ch_transcripts_csv,
-                    ch_morphology_image,
+                    ch_segmentation_mask,
                     ch_config
                 )
-                ch_redefined_bundle = BAYSOR_RUN_MORPHOLOGY_OME_TIF.out.redefined_bundle
+                ch_redefined_bundle = BAYSOR_RUN_PRIOR_SEGMENTATION_MASK.out.redefined_bundle
             }
 
             // run cellpose on the morphology_ome.tif

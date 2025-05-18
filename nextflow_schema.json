@@ -58,6 +58,11 @@
                     "description": "Model to use for running or starting training.",
                     "format": "file-path"
                 },
+                "segmentation_mask": {
+                    "type": "string",
+                    "description": "Prior segmentation mask from other segmentation methods.",
+                    "format": "file-path"
+                },
                 "email": {
                     "type": "string",
                     "description": "Email address for completion summary.",
