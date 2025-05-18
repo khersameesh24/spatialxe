@@ -78,7 +78,14 @@ workflow PIPELINE_INITIALISATION {
         }
         .set { ch_samplesheet }
 
+
+    //
+    // Check and validate xenium bundle
+    //
+    validateXeniumBundle()
+
     emit:
+
     samplesheet = ch_samplesheet
     versions    = ch_versions
 
@@ -180,6 +187,12 @@ def validateInputParameters() {
 
 }
 
+//
+// Check and validate xenium bundle
+//
+def validateXeniumBundle() {
+
+}
 
 //
 // Generate methods description for MultiQC
