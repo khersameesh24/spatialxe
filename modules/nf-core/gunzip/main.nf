@@ -11,7 +11,7 @@ process GUNZIP {
     tuple val(meta), path(archive)
 
     output:
-    tuple val(meta), path("${gunzip}"), emit: gunzip
+    tuple val(meta), path("${archive}.gz"), emit: gunzip
     path "versions.yml", emit: versions
 
     when:
@@ -19,16 +19,14 @@ process GUNZIP {
 
     script:
     def args = task.ext.args ?: ''
-    def extension = (archive.toString() - '.gz').tokenize('.')[-1]
-    def name = archive.toString() - '.gz' - ".${extension}"
-    def prefix = task.ext.prefix ?: name
-    gunzip = prefix + ".${extension}"
+    def prefix = task.ext.prefix
+    def gunzip = "${prefix}" + ".gz"
     """
     # Not calling gunzip itself because it creates files
     # with the original group ownership rather than the
     # default one for that user / the work directory
     gzip \\
-        -cd \\
+        -c \\
         ${args} \\
         ${archive} \\
         > ${gunzip}

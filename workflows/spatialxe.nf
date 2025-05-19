@@ -67,7 +67,6 @@ workflow SPATIALXE {
     ch_bundle_path         = Channel.empty()
     ch_raw_bundle          = Channel.empty()
     ch_gene_panel          = Channel.empty()
-    ch_transcripts_csv     = Channel.empty()
     ch_transcripts_parquet = Channel.empty()
     ch_morphology_image    = Channel.empty()
     ch_redefined_bundle    = Channel.empty()
@@ -112,15 +111,6 @@ workflow SPATIALXE {
     // path to bundle input
     ch_bundle_path = ch_input.map { meta, bundle, _image ->
         return [ meta, bundle ]
-    }
-
-    // get transcript.csv.gz from the xenium bundle
-    ch_transcripts_csv = ch_input.map { meta, bundle, _image ->
-        def transcripts_csv = file (
-            bundle.toString().replaceFirst(/\/$/, '') + "/transcripts.csv.gz",
-            checkIfExists: true
-        )
-        return [ meta, transcripts_csv ]
     }
 
     // get transcript.parquet from the xenium bundle
@@ -203,7 +193,7 @@ workflow SPATIALXE {
     if ( params.generate_preview && params.mode == 'coordinate' ) {
 
         BAYSOR_GENERATE_PREVIEW (
-            ch_transcripts_csv,
+            ch_transcripts_parquet,
             ch_config
         )
         log.info "Preview generated at ${params.outdir}"
@@ -246,7 +236,7 @@ workflow SPATIALXE {
 
                 BAYSOR_RUN_PRIOR_SEGMENTATION_MASK (
                     ch_bundle_path,
-                    ch_transcripts_csv,
+                    ch_transcripts_parquet,
                     ch_segmentation_mask,
                     ch_config
                 )
@@ -278,7 +268,7 @@ workflow SPATIALXE {
 
             PROSEG_PRESET_PROSEG2BAYSOR (
                 ch_bundle_path,
-                ch_transcripts_csv
+                ch_transcripts_parquet
             )
             ch_redefined_bundle = PROSEG_PRESET_PROSEG2BAYSOR.out.redefined_bundle
 
@@ -287,18 +277,18 @@ workflow SPATIALXE {
         // check it the provided method is part of the methods list
         if ( params.segmentation in params.transcript_seg_methods ) {
 
-            // run proseg with transcripts.csv.gz
+            // run proseg with transcripts.parquet
             if ( params.segmentation == 'proseg') {
 
                 PROSEG_PRESET_PROSEG2BAYSOR (
                     ch_bundle_path,
-                    ch_transcripts_csv
+                    ch_transcripts_parquet
                 )
                 ch_redefined_bundle = PROSEG_PRESET_PROSEG2BAYSOR.out.redefined_bundle
 
             }
 
-            // run segger with transcripts.csv.gz
+            // run segger with transcripts.parquet
             if ( params.segmentation == 'segger' ) {
 
                 SEGGER_CREATE_TRAIN_PREDICT (
@@ -308,12 +298,12 @@ workflow SPATIALXE {
 
             }
 
-            // run baysor with transcripts.csv.gz
+            // run baysor with transcripts.parquet
             if ( params.segmentation == 'baysor' ) {
 
                 BAYSOR_RUN_TRANSCRIPTS_CSV (
                     ch_bundle_path,
-                    ch_transcripts_csv,
+                    ch_transcripts_parquet,
                     ch_config
                 )
                 ch_redefined_bundle = BAYSOR_RUN_TRANSCRIPTS_CSV.out.redefined_bundle

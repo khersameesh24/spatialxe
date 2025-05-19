@@ -11,9 +11,9 @@ workflow BAYSOR_RUN_TRANSCRIPTS_CSV {
 
     take:
 
-    ch_bundle_path     // channel: [ val(meta), ["xenium-bundle"] ]
-    ch_transcripts_csv // channel: [ val(meta), ["transcripts.csv.gz"] ]
-    ch_config          // channel: ["path-to-xenium.toml"]
+    ch_bundle_path          // channel: [ val(meta), ["xenium-bundle"] ]
+    ch_transcripts_parquet  // channel: [ val(meta), ["transcripts.csv.parquet"] ]
+    ch_config               // channel: ["path-to-xenium.toml"]
 
     main:
 
@@ -24,18 +24,10 @@ workflow BAYSOR_RUN_TRANSCRIPTS_CSV {
     ch_htmls                = Channel.empty()
 
     ch_redefined_bundle     = Channel.empty()
-    ch_unzipped_transcripts = Channel.empty()
-
-
-    // unzip transcripts.csv.gz
-    GUNZIP ( ch_transcripts_csv )
-    ch_versions = ch_versions.mix ( GUNZIP.out.versions )
-
-    ch_unzipped_transcripts = GUNZIP.out.gunzip
 
     // run baysor with transcripts.csv
     BAYSOR_RUN_TRANSCRIPTS (
-        ch_unzipped_transcripts,
+        ch_transcripts_parquet,
         [],
         ch_config,
         30

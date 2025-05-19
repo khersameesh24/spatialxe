@@ -2,20 +2,18 @@
 // Run baysor run & import-segmentation
 //
 
-include { GUNZIP                               } from '../../../modules/nf-core/gunzip/main'
-include { RESOLIFT                             } from '../../../modules/local/resolift/main'
-include { BAYSOR_RUN as BAYSOR_RUN_IMAGE       } from '../../../modules/local/baysor/run/main'
-include { XENIUMRANGER_IMPORT_SEGMENTATION     } from '../../../modules/nf-core/xeniumranger/import-segmentation/main'
+include { BAYSOR_RUN as BAYSOR_RUN_IMAGE   } from '../../../modules/local/baysor/run/main'
+include { XENIUMRANGER_IMPORT_SEGMENTATION } from '../../../modules/nf-core/xeniumranger/import-segmentation/main'
 
 
 workflow BAYSOR_RUN_PRIOR_SEGMENTATION_MASK {
 
     take:
 
-    ch_bundle_path       // channel: [ val(meta), ["path-to-xenium-bundle"] ]
-    ch_transcripts_csv   // channel: [ val(meta), ["path-to-transcripts.csv.gz"] ]
-    ch_segmentation_mask // channel: [ ["path-to-prior-segmentation-mask"] ]
-    ch_config            // channel: ["path-to-xenium.toml"]
+    ch_bundle_path         // channel: [ val(meta), ["path-to-xenium-bundle"] ]
+    ch_transcripts_parquet // channel: [ val(meta), ["path-to-transcripts.parquet"] ]
+    ch_segmentation_mask   // channel: [ ["path-to-prior-segmentation-mask"] ]
+    ch_config              // channel: [ "path-to-xenium.toml" ]
 
     main:
 
@@ -26,17 +24,11 @@ workflow BAYSOR_RUN_PRIOR_SEGMENTATION_MASK {
     ch_htmls                = Channel.empty()
 
     ch_redefined_bundle     = Channel.empty()
-    ch_unzipped_transcripts = Channel.empty()
 
-    // unzip transcripts.csv.gz
-    GUNZIP ( ch_transcripts_csv )
-    ch_versions = ch_versions.mix ( GUNZIP.out.versions )
-
-    ch_unzipped_transcripts = GUNZIP.out.gunzip
 
     // run baysor with morphology.tiff
     BAYSOR_RUN_IMAGE (
-        ch_unzipped_transcripts,
+        ch_transcripts_parquet,
         ch_segmentation_mask,
         ch_config,
         30

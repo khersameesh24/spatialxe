@@ -85,7 +85,7 @@
             "properties": {
                 "generate_preview": {
                     "type": "boolean",
-                    "description": "Whether to generate a preview of the dataset with the transcripts.csv.gz."
+                    "description": "Whether to generate a preview of the dataset with the transcripts.parquet."
                 },
                 "segmentation_refinement": {
                     "type": "boolean",
@@ -175,19 +175,6 @@
                 "features": {
                     "type": "string",
                     "description": "List of features to be passed to the ficture method. (eg: TP53,OCIAD1,BCAS3,SOX)"
-                },
-                "baysor_run_image": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Whether to run bayor with image/segmentation-mask."
-                },
-                "baysor_run_transcripts": {
-                    "type": "boolean",
-                    "description": "Whether to run baysor with transcripts.csv.gz."
-                },
-                "baysor_preview": {
-                    "type": "boolean",
-                    "description": "Whether to create a preview of the dataset with transcripts.csv.gz."
                 }
             }
         },
