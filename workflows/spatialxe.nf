@@ -62,16 +62,18 @@ workflow SPATIALXE {
     */
 
     ch_versions            = Channel.empty()
-    ch_multiqc_files       = Channel.empty()
+
+    ch_input               = Channel.empty()
     ch_bundle              = Channel.empty()
+    ch_config              = Channel.empty()
     ch_bundle_path         = Channel.empty()
     ch_raw_bundle          = Channel.empty()
     ch_gene_panel          = Channel.empty()
-    ch_transcripts_parquet = Channel.empty()
+    ch_multiqc_files       = Channel.empty()
     ch_morphology_image    = Channel.empty()
     ch_redefined_bundle    = Channel.empty()
-    ch_config              = Channel.empty()
-    ch_input               = Channel.empty()
+    ch_transcripts_parquet = Channel.empty()
+
 
     /*
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -67,22 +67,36 @@ workflow PIPELINE_INITIALISATION {
     // Custom validation for pipeline parameters
     //
     validateInputParameters()
+    log.info "INFO ✅ Input params validated"
 
     //
     // Create channel from input file provided through params.input
     //
-    Channel
+    try {
+
+        Channel
         .fromList(samplesheetToList(input, "${projectDir}/assets/schema_input.json"))
         .map {
             meta, bundle, image -> return [ [id: meta.id], bundle, image ]
         }
         .set { ch_samplesheet }
 
+        log.info "INFO ✅ Samplesheet validated"
+
+    } catch (Exception e) {
+
+        log.error "❌ Samplesheet validation failed: ${e.message}"
+        exit 1
+    }
+
 
     //
     // Check and validate xenium bundle
     //
-    validateXeniumBundle()
+    if ( !workflow.profile.contains('test')) {
+        validateXeniumBundle(ch_samplesheet)
+    }
+
 
     emit:
 
@@ -136,7 +150,7 @@ workflow PIPELINE_COMPLETION {
     }
 
     workflow.onError {
-        log.error "Pipeline failed. Please refer to troubleshooting docs: https://nf-co.re/docs/usage/troubleshooting"
+        log.error "❌ Pipeline failed. Please refer to troubleshooting docs: https://nf-co.re/docs/usage/troubleshooting"
     }
 }
 
@@ -153,35 +167,38 @@ def validateInputParameters() {
     // check if the segmentation method provided is valid for a mode
     if ( params.mode == 'image' && params.segmentation ) {
         if ( !params.image_seg_methods.contains(params.segmentation) ) {
-            error "Error: Invalid segmentation method: ${params.segmentation} provided for the `image` based mode. Options: ${params.image_seg_methods}"
+            log.error "❌ Error: Invalid segmentation method: ${params.segmentation} provided for the `image` based mode. Options: ${params.image_seg_methods}"
+            exit 1
         }
     }
 
     if ( params.mode == 'coordinate' && params.segmentation ) {
         if ( !params.transcript_seg_methods.contains(params.segmentation) ) {
-                error "Error: Invalid segmentation method: `${params.segmentation}` provided for the `coordinate` based mode. Options: ${params.transcript_seg_methods}"
+                log.error "❌ Error: Invalid segmentation method: `${params.segmentation}` provided for the `coordinate` based mode. Options: ${params.transcript_seg_methods}"
+                exit 1
         }
     }
 
     // check if --relabel_genes is true but --gene_panel is not provided
     if ( params.relabel_genes && !params.gene_panel ) {
-        log.warn "Relabel genes is enabled, but gene panel is not provided with the `--gene_panel`. Using `gene_panel.json` in the xenium bundle."
+        log.warn "⚠️  Relabel genes is enabled, but gene panel is not provided with the `--gene_panel`. Using `gene_panel.json` in the xenium bundle."
     }
 
     // check if --relabel_genes is true but --gene_panel is not provided
     if ( params.gene_panel && !params.relabel_genes ) {
-        log.warn "Gene panel provided, but relabel genes is disabled. Using `gene_panel.json` only to generate metadata."
+        log.warn "⚠️  Gene panel provided, but relabel genes is disabled. Using `gene_panel.json` only to generate metadata."
     }
 
     // check if segmentation method is xeniumranger and nucleus_ony_segmentation is enabled
     if ( params.segmentation == 'xeniumranger' && !params.nucleus_segmentation_only ) {
-        log.warn "Nucleus segmentation is disabled. Running xeniumranger resegment module to redefine xenium bundle without nucleus segmentation."
-        log.warn "Use --nucleus_segmentation_only to enable nucleus segmentation to redefine xenium bundle with import-segmentation module."
+        log.warn "⚠️  Nucleus segmentation is disabled. Running xeniumranger resegment module to redefine xenium bundle without nucleus segmentation."
+        log.warn "⚠️  Use --nucleus_segmentation_only to enable nucleus segmentation to redefine xenium bundle with import-segmentation module."
     }
 
     if ( params.mode == 'image' && params.segmentation == 'baysor' ) {
         if ( !params.segmentation_mask ) {
-            error "Error: Missing path to segmentation mask. Image-based segmentation with the `baysor` method requires a segmentation mask with the `--segmentation_mask` option."
+            log.error "❌ Error: Missing path to segmentation mask. Image-based segmentation with the `baysor` method requires a segmentation mask with the `--segmentation_mask` option."
+            exit 1
         }
     }
 
@@ -190,8 +207,69 @@ def validateInputParameters() {
 //
 // Check and validate xenium bundle
 //
-def validateXeniumBundle() {
+def validateXeniumBundle(ch_samplesheet) {
 
+    // define xenium bundle directory structure
+    def xenium_bundle = [
+        "analysis.tar.gz",
+        "analysis.zarr.zip",
+        "analysis_summary.html",
+        "cell_boundaries.csv.gz",
+        "cell_boundaries.parquet",
+        "cell_feature_matrix.h5",
+        "cell_feature_matrix.tar.gz",
+        "cell_feature_matrix.zarr.zip",
+        "cells.csv.gz",
+        "cells.parquet",
+        "cells.zarr.zip",
+        "experiment.xenium",
+        "gene_panel.json",
+        "metrics_summary.csv",
+        "morphology.ome.tif",
+        "morphology_focus/",
+        "nucleus_boundaries.csv.gz",
+        "nucleus_boundaries.parquet",
+        "transcripts.parquet",
+        "transcripts.zarr.zip"
+    ]
+
+    // get bundle path
+    def ch_bundle_path = ch_samplesheet.map {
+        _meta, bundle, _image ->
+        def bundle_path = file (
+            bundle.toString().replaceFirst(/\/$/, ''),
+        )
+        return bundle_path
+    }
+
+    // check if the path exists
+    if ( !ch_bundle_path.map { it.exists() } ) {
+        error "❌ Error: Xenium bundle path not found. Check if the path provided in the samplesheet exists."
+        exit 1
+    }
+
+    // if the path exists, check for the presence of xenium files
+    if ( ch_bundle_path.map { it.exists() } ) {
+
+        ch_bundle_path.map { path ->
+            def missing_files = []
+
+            def allExist = xenium_bundle.every { filename ->
+            def fullPath = file("${path}/${filename}")
+            if (!fullPath.exists()) {
+                missing_files.add(filename)
+                return false
+            }
+                return true
+            }
+
+            if (!allExist) {
+                log.error "❌ Missing file(s) at bundle path provided in the samplesheet: ${missing_files}"
+                exit 1
+            }
+        }
+    }
+    log.info "INFO ✅ Xenium bundle validated"
 }
 
 //
