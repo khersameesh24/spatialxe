@@ -16,7 +16,6 @@ workflow XENIUMRANGER_RELABEL_RESEGMENT {
 
     ch_versions = Channel.empty()
 
-    ch_bundle_path.view()
     XENIUMRANGER_RELABEL (
         ch_bundle_path,
         ch_gene_panel

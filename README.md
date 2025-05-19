@@ -61,7 +61,7 @@ nextflow run nf-core/spatialxe \
 
 ## Run coordinate-based segmentation mode <br>
 
-`PROSEG -> BAYSOR -> XR-IMPORT_SEGMENTATION -> SPATIALDATA -> QC`
+`PROSEG -> PROSEG2BAYSOR -> XR-IMPORT_SEGMENTATION -> SPATIALDATA -> QC`
 
 ```bash
 nextflow run nf-core/spatialxe \

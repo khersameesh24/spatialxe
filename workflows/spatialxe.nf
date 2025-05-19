@@ -100,8 +100,6 @@ workflow SPATIALXE {
             }
             .set { ch_input }
 
-        ch_input.view()
-
     } else {
 
         // for all other profile runs
