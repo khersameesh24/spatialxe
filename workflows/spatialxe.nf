@@ -20,7 +20,7 @@ include { UNTAR } from '../modules/nf-core/untar/main'
 include { SEGGER_CREATE_TRAIN_PREDICT    } from '../subworkflows/local/segger_create_train_predict/main'
 include { PROSEG_PRESET_PROSEG2BAYSOR    } from '../subworkflows/local/proseg_preset_proseg2baysor/main'
 include { BAYSOR_GENERATE_PREVIEW        } from '../subworkflows/local/baysor_generate_preview/main'
-include { BAYSOR_RUN_TRANSCRIPTS_PARQUET } from '../subworkflows/local/baysor_run_transcripts_csv/main'
+include { BAYSOR_RUN_TRANSCRIPTS_PARQUET } from '../subworkflows/local/baysor_run_transcripts_parquet/main'
 
 // image-based segmentation subworklfows
 include { BAYSOR_RUN_PRIOR_SEGMENTATION_MASK        } from '../subworkflows/local/baysor_run_prior_segmentation_mask/main'
