@@ -7,7 +7,7 @@ include { BAYSOR_RUN as BAYSOR_RUN_TRANSCRIPTS } from '../../../modules/local/ba
 include { XENIUMRANGER_IMPORT_SEGMENTATION     } from '../../../modules/nf-core/xeniumranger/import-segmentation/main'
 
 
-workflow BAYSOR_RUN_TRANSCRIPTS_CSV {
+workflow BAYSOR_RUN_TRANSCRIPTS_PARQUET {
 
     take:
 

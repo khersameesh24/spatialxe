@@ -17,10 +17,10 @@ include { paramsSummaryMap       } from 'plugin/nf-schema'
 include { UNTAR } from '../modules/nf-core/untar/main'
 
 // coordinate-based segmentation subworklfows
-include { SEGGER_CREATE_TRAIN_PREDICT } from '../subworkflows/local/segger_create_train_predict/main'
-include { PROSEG_PRESET_PROSEG2BAYSOR } from '../subworkflows/local/proseg_preset_proseg2baysor/main'
-include { BAYSOR_GENERATE_PREVIEW     } from '../subworkflows/local/baysor_generate_preview/main'
-include { BAYSOR_RUN_TRANSCRIPTS_CSV  } from '../subworkflows/local/baysor_run_transcripts_csv/main'
+include { SEGGER_CREATE_TRAIN_PREDICT    } from '../subworkflows/local/segger_create_train_predict/main'
+include { PROSEG_PRESET_PROSEG2BAYSOR    } from '../subworkflows/local/proseg_preset_proseg2baysor/main'
+include { BAYSOR_GENERATE_PREVIEW        } from '../subworkflows/local/baysor_generate_preview/main'
+include { BAYSOR_RUN_TRANSCRIPTS_PARQUET } from '../subworkflows/local/baysor_run_transcripts_csv/main'
 
 // image-based segmentation subworklfows
 include { BAYSOR_RUN_PRIOR_SEGMENTATION_MASK        } from '../subworkflows/local/baysor_run_prior_segmentation_mask/main'
@@ -301,12 +301,12 @@ workflow SPATIALXE {
             // run baysor with transcripts.parquet
             if ( params.segmentation == 'baysor' ) {
 
-                BAYSOR_RUN_TRANSCRIPTS_CSV (
+                BAYSOR_RUN_TRANSCRIPTS_PARQUET (
                     ch_bundle_path,
                     ch_transcripts_parquet,
                     ch_config
                 )
-                ch_redefined_bundle = BAYSOR_RUN_TRANSCRIPTS_CSV.out.redefined_bundle
+                ch_redefined_bundle = BAYSOR_RUN_TRANSCRIPTS_PARQUET.out.redefined_bundle
             }
 
         }
