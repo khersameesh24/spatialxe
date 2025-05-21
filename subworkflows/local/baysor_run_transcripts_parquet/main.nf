@@ -2,7 +2,6 @@
 // Run baysor run and import-segmentation
 //
 
-include { GUNZIP                               } from '../../../modules/nf-core/gunzip/main'
 include { BAYSOR_RUN as BAYSOR_RUN_TRANSCRIPTS } from '../../../modules/local/baysor/run/main'
 include { XENIUMRANGER_IMPORT_SEGMENTATION     } from '../../../modules/nf-core/xeniumranger/import-segmentation/main'
 

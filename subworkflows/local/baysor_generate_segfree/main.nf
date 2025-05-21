@@ -2,7 +2,6 @@
 // Run baysor segfree
 //
 
-include { GUNZIP                               } from '../../../modules/nf-core/gunzip/main'
 include { BAYSOR_SEGFREE                       } from '../../../modules/local/baysor/segfree/main'
 
 

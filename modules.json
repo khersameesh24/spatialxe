@@ -11,12 +11,6 @@
                         "installed_by": ["modules"],
                         "patch": "modules/nf-core/cellpose/cellpose.diff"
                     },
-                    "gunzip": {
-                        "branch": "master",
-                        "git_sha": "81880787133db07d9b4c1febd152c090eb8325dc",
-                        "installed_by": ["modules"],
-                        "patch": "modules/nf-core/gunzip/gunzip.diff"
-                    },
                     "multiqc": {
                         "branch": "master",
                         "git_sha": "7b50cb7be890e4b28cffb82e438cc6a8d7805d3f",
@@ -25,7 +19,8 @@
                     "untar": {
                         "branch": "master",
                         "git_sha": "05954dab2ff481bcb999f24455da29a5828af08d",
-                        "installed_by": ["modules"]
+                        "installed_by": ["modules"],
+                        "patch": "modules/nf-core/untar/untar.diff"
                     },
                     "unzip": {
                         "branch": "master",

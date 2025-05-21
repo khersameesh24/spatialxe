@@ -2,7 +2,6 @@
 // Runs proseg for the xenium format and proseg2baysor to generate cell ploygons
 //
 
-include { GUNZIP                           } from '../../../modules/nf-core/gunzip/main'
 include { PROSEG                           } from '../../../modules/local/proseg/preset/main'
 include { PROSEG2BAYSOR                    } from '../../../modules/local/proseg/proseg2baysor/main'
 include { PARQUET_TO_CSV                   } from '../../../modules/local/spatialconverter/parquet_to_csv/main'
@@ -20,15 +19,11 @@ workflow PROSEG_PRESET_PROSEG2BAYSOR {
     ch_versions = Channel.empty()
 
     // run parquet-to-csv
-    PARQUET_TO_CSV ( ch_transcripts_parquet )
+    PARQUET_TO_CSV ( ch_transcripts_parquet, ".gz" )
     ch_versions = ch_versions.mix( PARQUET_TO_CSV.out.versions )
 
-    // run gzip to create `transcripts.csv.gz`
-    GUNZIP ( PARQUET_TO_CSV.out.transcripts_csv )
-    ch_versions = ch_versions.mix( GUNZIP.out.versions )
-
     // run proseg with the xenium format
-    PROSEG ( GUNZIP.out.gunzip )
+    PROSEG ( PARQUET_TO_CSV.out.transcripts_csv )
     ch_versions = ch_versions.mix( PROSEG.out.versions )
 
     // run proseg-to-baysor on the data generated with the proseg run

@@ -63,4 +63,3 @@ workflow SPATIALDATA_WRITE_META_MERGE {
 
     versions        = ch_versions                                          // channel: [ versions.yml ]
 }
-

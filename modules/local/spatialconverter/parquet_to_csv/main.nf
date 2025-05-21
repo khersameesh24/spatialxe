@@ -6,10 +6,11 @@ process PARQUET_TO_CSV {
 
     input:
     tuple val(meta), path(transcripts)
+    val(extension)
 
     output:
-    tuple val(meta), path("*.csv"), emit: transcripts_csv
-    path("versions.yml")          , emit: versions
+    tuple val(meta), path("*.csv*"), emit: transcripts_csv
+    path("versions.yml")           , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -23,7 +24,7 @@ process PARQUET_TO_CSV {
 
     stub:
     """
-    touch ${transcripts}
+    touch ${transcripts}.csv
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         spatialconverter: "${task.version}"
