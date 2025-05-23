@@ -66,9 +66,10 @@ workflow SPATIALXE {
     ch_input               = Channel.empty()
     ch_bundle              = Channel.empty()
     ch_config              = Channel.empty()
-    ch_bundle_path         = Channel.empty()
+    ch_features            = Channel.empty()
     ch_raw_bundle          = Channel.empty()
     ch_gene_panel          = Channel.empty()
+    ch_bundle_path         = Channel.empty()
     ch_multiqc_files       = Channel.empty()
     ch_morphology_image    = Channel.empty()
     ch_redefined_bundle    = Channel.empty()
@@ -144,6 +145,13 @@ workflow SPATIALXE {
         )
     }
 
+    // get a list of features if provided with the --features for the ficture method
+    if ( params.features ) {
+        ch_features = Channel.of (
+            params.features.split(',')
+        )
+    }
+
     // get gene_panel.json if provided with --gene_panel, sets relabel_genes to true
     if (( params.gene_panel )) {
 
@@ -190,14 +198,12 @@ workflow SPATIALXE {
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     */
     // run baysor preview if `generate_preview ` is true
-    if ( params.generate_preview && params.mode == 'coordinate' ) {
+    if ( params.mode == 'preview' ) {
 
         BAYSOR_GENERATE_PREVIEW (
             ch_transcripts_parquet,
             ch_config
         )
-        log.info "Preview generated at ${params.outdir}"
-        exit 0
     }
 
     /*
@@ -208,7 +214,7 @@ workflow SPATIALXE {
     if ( params.mode == 'image' ) {
 
         // trigger the default image-based workflow if no method is specified
-        if ( !params.segmentation ) {
+        if ( !params.method ) {
 
             CELLPOSE_BAYSOR_IMPORT_SEGMENTATION (
                 ch_morphology_image,
@@ -220,10 +226,10 @@ workflow SPATIALXE {
         }
 
         // check it the provided method is part of the methods list
-        if ( params.segmentation in params.image_seg_methods ) {
+        if ( params.method in params.image_seg_methods ) {
 
             // run xeniumranger resegment with morphology_ome.tif
-            if ( params.segmentation == 'xeniumranger' ) {
+            if ( params.method == 'xeniumranger' ) {
 
                 XENIUMRANGER_RESEGMENT_MORPHOLOGY_OME_TIF (
                     ch_bundle_path
@@ -232,7 +238,7 @@ workflow SPATIALXE {
             }
 
             // run baysor run with morphology_ome.tif
-            if ( params.segmentation == 'baysor' ) {
+            if ( params.method == 'baysor' ) {
 
                 BAYSOR_RUN_PRIOR_SEGMENTATION_MASK (
                     ch_bundle_path,
@@ -244,7 +250,7 @@ workflow SPATIALXE {
             }
 
             // run cellpose on the morphology_ome.tif
-            if ( params.segmentation == 'cellpose' ) {
+            if ( params.method == 'cellpose' ) {
 
                 CELLPOSE_RESOLIFT_MORPHOLOGY_OME_TIF (
                     ch_morphology_image,
@@ -264,7 +270,7 @@ workflow SPATIALXE {
     if ( params.mode == 'coordinate' ) {
 
         // trigger the default transcripts-based workflow if no method is specified
-        if ( !params.segmentation ) {
+        if ( !params.method ) {
 
             PROSEG_PRESET_PROSEG2BAYSOR (
                 ch_bundle_path,
@@ -275,10 +281,10 @@ workflow SPATIALXE {
         }
 
         // check it the provided method is part of the methods list
-        if ( params.segmentation in params.transcript_seg_methods ) {
+        if ( params.method in params.transcript_seg_methods ) {
 
             // run proseg with transcripts.parquet
-            if ( params.segmentation == 'proseg') {
+            if ( params.method == 'proseg') {
 
                 PROSEG_PRESET_PROSEG2BAYSOR (
                     ch_bundle_path,
@@ -289,7 +295,7 @@ workflow SPATIALXE {
             }
 
             // run segger with transcripts.parquet
-            if ( params.segmentation == 'segger' ) {
+            if ( params.method == 'segger' ) {
 
                 SEGGER_CREATE_TRAIN_PREDICT (
                     ch_bundle_path,
@@ -299,7 +305,7 @@ workflow SPATIALXE {
             }
 
             // run baysor with transcripts.parquet
-            if ( params.segmentation == 'baysor' ) {
+            if ( params.method == 'baysor' ) {
 
                 BAYSOR_RUN_TRANSCRIPTS_PARQUET (
                     ch_bundle_path,
@@ -332,17 +338,65 @@ workflow SPATIALXE {
         SPATIALXE - SPATIALDATA / METADATA LAYER
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     */
-    // run spatialdata modules to generate sd objects
-    SPATIALDATA_WRITE_META_MERGE (
-        ch_bundle_path,
-        ch_redefined_bundle
-    )
+
+    // run spatialdata modules to generate sd objects in image or coordinate mode
+    if ( params.mode == 'image' || params.mode == 'coordinate' ) {
+
+        SPATIALDATA_WRITE_META_MERGE (
+            ch_bundle_path,
+            ch_redefined_bundle
+        )
+
+    }
+
 
     /*
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         SPATIALXE - QC LAYER
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     */
+
+
+    /*
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        SPATIALXE - SEGMENTATION-FREE LAYER
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    */
+    if ( params.mode == 'segfree' ) {
+
+        // trigger the default segfree workflow if no method is specified
+        if ( !params.method ) {
+
+            BAYSOR_GENERATE_SEGFREE (
+                ch_transcripts_parquet,
+                ch_config
+            )
+        }
+
+        // check it the provided method is part of the methods list
+        if ( params.method in params.segfree_methods ) {
+
+            // run baysor with transcripts.parquet
+            if ( params.method == 'baysor' ) {
+
+                BAYSOR_GENERATE_SEGFREE (
+                    ch_transcripts_parquet,
+                    ch_config
+                )
+                ch_redefined_bundle = BAYSOR_RUN_TRANSCRIPTS_PARQUET.out.redefined_bundle
+            }
+
+            // run ficture with transcripts.parquet
+            if ( params.method == 'ficture' ) {
+
+                FICTURE_PREPROCESS_MODEL (
+                    ch_transcripts_parquet,
+                    ch_features
+                )
+                ch_redefined_bundle = BAYSOR_RUN_TRANSCRIPTS_PARQUET.out.redefined_bundle
+            }
+        }
+    }
 
 
 

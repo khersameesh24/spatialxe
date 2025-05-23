@@ -2,9 +2,9 @@
 // Run segger create_dataset, train and predict modules & parquet_to_csv
 //
 
-include { SEGGER_CREATE_DATASET } from '../../../modules/local/segger/create_dataset/main'
 include { SEGGER_TRAIN          } from '../../../modules/local/segger/train/main'
 include { SEGGER_PREDICT        } from '../../../modules/local/segger/predict/main'
+include { SEGGER_CREATE_DATASET } from '../../../modules/local/segger/create_dataset/main'
 include { PARQUET_TO_CSV        } from '../../../modules/local/spatialconverter/parquet_to_csv/main'
 
 workflow SEGGER_CREATE_TRAIN_PREDICT {

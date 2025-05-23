@@ -67,7 +67,7 @@ workflow PIPELINE_INITIALISATION {
     // Custom validation for pipeline parameters
     //
     validateInputParameters()
-    log.info "INFO Input params validated ✅ "
+    log.info "INFO Input params validated  ✅ "
 
     //
     // Create channel from input file provided through params.input
@@ -81,7 +81,7 @@ workflow PIPELINE_INITIALISATION {
         }
         .set { ch_samplesheet }
 
-        log.info "INFO Samplesheet validated ✅ "
+        log.info "INFO Samplesheet validated   ✅ "
 
     } catch (Exception e) {
 
@@ -165,16 +165,16 @@ workflow PIPELINE_COMPLETION {
 def validateInputParameters() {
 
     // check if the segmentation method provided is valid for a mode
-    if ( params.mode == 'image' && params.segmentation ) {
-        if ( !params.image_seg_methods.contains(params.segmentation) ) {
-            log.error "❌ Error: Invalid segmentation method: ${params.segmentation} provided for the `image` based mode. Options: ${params.image_seg_methods}"
+    if ( params.mode == 'image' && params.method ) {
+        if ( !params.image_seg_methods.contains(params.method) ) {
+            log.error "❌ Error: Invalid segmentation method: ${params.method} provided for the `image` based mode. Options: ${params.image_seg_methods}"
             exit 1
         }
     }
 
-    if ( params.mode == 'coordinate' && params.segmentation ) {
-        if ( !params.transcript_seg_methods.contains(params.segmentation) ) {
-                log.error "❌ Error: Invalid segmentation method: `${params.segmentation}` provided for the `coordinate` based mode. Options: ${params.transcript_seg_methods}"
+    if ( params.mode == 'coordinate' && params.method ) {
+        if ( !params.transcript_seg_methods.contains(params.method) ) {
+                log.error "❌ Error: Invalid segmentation method: `${params.method}` provided for the `coordinate` based mode. Options: ${params.transcript_seg_methods}"
                 exit 1
         }
     }
@@ -190,13 +190,13 @@ def validateInputParameters() {
     }
 
     // check if segmentation method is xeniumranger and nucleus_ony_segmentation is enabled
-    if ( params.segmentation == 'xeniumranger' && !params.nucleus_segmentation_only ) {
+    if ( params.method == 'xeniumranger' && !params.nucleus_segmentation_only ) {
         log.warn "⚠️  Nucleus segmentation is disabled. Running xeniumranger resegment module to redefine xenium bundle without nucleus segmentation."
         log.warn "⚠️  Use --nucleus_segmentation_only to enable nucleus segmentation to redefine xenium bundle with import-segmentation module."
     }
 
-    if ( params.mode == 'image' && params.segmentation == 'baysor' ) {
-        if ( !params.segmentation_mask ) {
+    if ( params.mode == 'image' && params.method == 'baysor' ) {
+        if ( !params.method_mask ) {
             log.error "❌ Error: Missing path to segmentation mask. Image-based segmentation with the `baysor` method requires a segmentation mask with the `--segmentation_mask` option."
             exit 1
         }

@@ -15,16 +15,16 @@ workflow BAYSOR_GENERATE_PREVIEW {
 
     main:
 
-    ch_versions             = Channel.empty()
-    ch_preview_html         = Channel.empty()
+    ch_versions      = Channel.empty()
+    ch_preview_html  = Channel.empty()
 
 
     // run parquet to csv
-    PARQUET_TO_CSV ( ch_transcripts_parquet )
+    PARQUET_TO_CSV ( ch_transcripts_parquet, ".csv" )
     ch_versions = ch_versions.mix ( PARQUET_TO_CSV.out.versions )
 
     // generate randomised sample data
-    BAYSOR_CREATE_DATASET ( PARQUET_TO_CSV.out.transcripts_csv, "0.3" )
+    BAYSOR_CREATE_DATASET ( PARQUET_TO_CSV.out.transcripts_csv, 0.3 )
     ch_versions = ch_versions.mix ( BAYSOR_CREATE_DATASET.out.versions )
 
     // run baysor preview if param - generate_preview is true

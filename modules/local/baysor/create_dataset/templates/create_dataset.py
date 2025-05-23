@@ -41,18 +41,16 @@ class BaysorPreview():
 
             # randomize csv rows to write
             for row in reader:
-                if random.random() < sample_fraction:
+                if random.random() < float(sample_fraction):
                     writer.writerow(row)
-
-        # print(f"Sampled data written to {sampled_transcripts}")
 
         return None
 
     @staticmethod
-    def generate_version_yml(version: str) -> None:
+    def generate_version_yml() -> None:
         with open("versions.yml", "w") as yml:
             yml.write('"${task.process}":\\n')
-            yml.write(f'Baysor-Preview Create Dataset: {version}"\\n')
+            yml.write("Baysor-Preview Create Dataset: 0.7.1'\\n")
 
         return None
 
@@ -64,17 +62,16 @@ def main() -> None:
     transcripts: str = "${transcripts}"
     sample_fraction: float = "${sample_fraction}"
     sampled_transcripts: str = "sampled_transcripts.csv"
-    version: str = "${VERSION}"
 
     # generate dataset
-    BaysorPreview.generate_dataset(
+    BaysorPreview.generate_dataset (
         transcripts=transcripts,
         sampled_transcripts=sampled_transcripts,
         sample_fraction=sample_fraction
     )
 
     # generate versions.yml
-    BaysorPreview.generate_version_yml(version=version)
+    BaysorPreview.generate_version_yml()
 
     return None
 

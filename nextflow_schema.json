@@ -31,12 +31,12 @@
                 },
                 "mode": {
                     "type": "string",
-                    "description": "Mode in which the pipeline is to be run. Either image-based or coordinate-based approach.",
-                    "enum": ["image", "coordinate"]
+                    "description": "Mode in which the pipeline is to be run. Either image-based segmentation, coordinate-based segmentation, segmentation-free analysis or data preview.",
+                    "enum": ["image", "coordinate", "segfree", "preview"]
                 },
-                "segmentation": {
+                "method": {
                     "type": "string",
-                    "enum": ["cellpose", "xeniumranger", "baysor", "proseg", "segger"],
+                    "enum": ["cellpose", "xeniumranger", "baysor", "proseg", "segger", "ficture"],
                     "description": "Segmentation method to run."
                 },
                 "gene_panel": {
@@ -83,10 +83,6 @@
             "description": "Options for the segmentation layer of the spatialxe pipeline",
             "default": "",
             "properties": {
-                "generate_preview": {
-                    "type": "boolean",
-                    "description": "Whether to generate a preview of the dataset with the transcripts.parquet."
-                },
                 "segmentation_refinement": {
                     "type": "boolean",
                     "description": "Whether to run refinement on the image-based segmentation methods. Runs coordinate-based methods after the initial image-based segmentation run."
