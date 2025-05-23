@@ -147,8 +147,9 @@ workflow SPATIALXE {
 
     // get a list of features if provided with the --features for the ficture method
     if ( params.features ) {
-        ch_features = Channel.of (
-            params.features.split(',')
+        ch_features = Channel.fromPath (
+            params.features,
+            checkIfExists: true
         )
     }
 
@@ -383,7 +384,6 @@ workflow SPATIALXE {
                     ch_transcripts_parquet,
                     ch_config
                 )
-                ch_redefined_bundle = BAYSOR_RUN_TRANSCRIPTS_PARQUET.out.redefined_bundle
             }
 
             // run ficture with transcripts.parquet
@@ -393,7 +393,6 @@ workflow SPATIALXE {
                     ch_transcripts_parquet,
                     ch_features
                 )
-                ch_redefined_bundle = BAYSOR_RUN_TRANSCRIPTS_PARQUET.out.redefined_bundle
             }
         }
     }
