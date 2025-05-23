@@ -23,7 +23,9 @@ workflow FICTURE_PREPROCESS_MODEL {
     ch_versions = ch_versions.mix ( PARQUET_TO_CSV.out.versions )
 
     // run ficture preprocessing
-    FICTURE_PREPROCESS ( PARQUET_TO_CSV.out.transcripts_csv, ch_features )
+    ch_transcripts = PARQUET_TO_CSV.out.transcripts_csv
+
+    FICTURE_PREPROCESS ( ch_transcripts, ch_features )
     ch_versions = ch_versions.mix ( FICTURE_PREPROCESS.out.versions )
 
     // run the ficture wrapper pipeline

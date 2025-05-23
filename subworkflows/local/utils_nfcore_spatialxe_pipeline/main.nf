@@ -255,12 +255,12 @@ def validateXeniumBundle(ch_samplesheet) {
             def missing_files = []
 
             def allExist = xenium_bundle.every { filename ->
-            def fullPath = file("${path}/${filename}")
-            if (!fullPath.exists()) {
-                missing_files.add(filename)
-                return false
-            }
-                return true
+                def fullPath = file("${path}/${filename}")
+                if (!fullPath.exists()) {
+                    missing_files.add(filename)
+                    return false
+                }
+                    return true
             }
 
             if (!allExist) {
@@ -269,7 +269,7 @@ def validateXeniumBundle(ch_samplesheet) {
             }
         }
     }
-    log.info "INFO Xenium bundle validated ✅ "
+    log.info "INFO Xenium bundle validated ✅ \n"
 }
 
 //
