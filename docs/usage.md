@@ -40,10 +40,10 @@ This runs the default image mode:<br>
 
 ```bash
 nextflow run nf-core/spatialxe \
+        -profile <docker/singularity/...>
         --input ./samplesheet.csv \
         --outdir ./results \
-        --mode image \
-        -profile <docker/singularity/...>
+        --mode image
 ```
 
 #### Coordinate-based (transcripts-based) segmentation mode
@@ -53,10 +53,10 @@ This runs the default coordinate mode:<br>
 
 ```bash
 nextflow run nf-core/spatialxe \
+        -profile <docker/singularity/...>
         --input ./samplesheet.csv \
         --outdir ./results \
-        --mode coordinate \
-        -profile <docker/singularity/...>
+        --mode coordinate
 ```
 
 ### Image-based Segmentation mode (--mode image): <br>
@@ -73,26 +73,26 @@ nextflow run nf-core/spatialxe \
 
 #### Run Segmentation with the methods methods mentioned above : <br>
 
-eg: To run proseg segmentation use the `coordinate` mode and the `proseg` segmentation method
+eg: To run proseg segmentation use the `coordinate` mode and the `proseg` segmentation method (--method)
 
 ```bash
 nextflow run nf-core/spatialxe \
+        -profile <docker/singularity/...>
         --input ./samplesheet.csv \
         --outdir ./results \
         --mode coordinate \
-        --segmentation proseg \
-        -profile <docker/singularity/...>
+        --method proseg
 ```
 
-eg: To run cellpose segmentation use the `image` mode and the `cellpose` segmentation method
+eg: To run cellpose segmentation use the `image` mode and the `cellpose` segmentation method (--method)
 
 ```bash
 nextflow run nf-core/spatialxe \
+        -profile <docker/singularity/...>
         --input ./samplesheet.csv \
         --outdir ./results \
         --mode image \
-        --segmentation cellpose \
-        -profile <docker/singularity/...>
+        --method cellpose
 ```
 
 This will launch the pipeline with the `docker` configuration profile. See below for more information about profiles.
