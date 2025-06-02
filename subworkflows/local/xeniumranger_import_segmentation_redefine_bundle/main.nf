@@ -11,14 +11,14 @@ workflow XENIUMRANGER_IMPORT_SEGMENTATION_REDEFINE_BUNDLE {
 
     take:
 
-    ch_bundle // channel: [ val(meta), [ "xenium-bundle" ] ]
+    ch_bundle_path // channel: [ val(meta), [ "path-to-xenium-bundle" ] ]
 
     main:
 
     ch_versions = Channel.empty()
     ch_redefined_bundle = Channel.empty()
 
-    cells = ch_bundle.map {
+    cells = ch_bundle_path.map {
         _meta, bundle -> return [ bundle + "/cells.zarr.zip" ]
     }
 
@@ -26,7 +26,7 @@ workflow XENIUMRANGER_IMPORT_SEGMENTATION_REDEFINE_BUNDLE {
     if ( params.expansion_distance == 0 || params.expansion_distance != 5 ){
 
         IMP_SEG_COUNT_MATRIX_EXP_DISTANCE (
-            ch_bundle,
+            ch_bundle_path,
             [],
             cells,
             [],
@@ -43,7 +43,7 @@ workflow XENIUMRANGER_IMPORT_SEGMENTATION_REDEFINE_BUNDLE {
     if ( params.qupath_polygons && params.nucleus_segmentation_only ) {
 
         IMP_SEG_POLYGON_GEOJSON_INPUT (
-            ch_bundle,
+            ch_bundle_path,
             [],
             params.qupath_polygons,
             [],
@@ -58,7 +58,7 @@ workflow XENIUMRANGER_IMPORT_SEGMENTATION_REDEFINE_BUNDLE {
     } else if ( params.qupath_polygons ) {
 
         IMP_SEG_POLYGON_GEOJSON_INPUT (
-            ch_bundle,
+            ch_bundle_path,
             [],
             params.qupath_polygons,
             params.qupath_polygons,
@@ -80,7 +80,7 @@ workflow XENIUMRANGER_IMPORT_SEGMENTATION_REDEFINE_BUNDLE {
     if ( params.qupath_polygons && params.alignment_csv ) {
 
         IMP_SEG_TRANS_MATRIX_INPUT (
-            ch_bundle,
+            ch_bundle_path,
             params.alignment_csv,
             params.qupath_polygons,
             params.qupath_polygons,

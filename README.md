@@ -26,8 +26,6 @@
 <!-- TODO nf-core: Include a figure that guides the user through the major workflow steps. Many nf-core
      workflows use the "tube map" design for that. See https://nf-co.re/docs/contributing/design_guidelines#examples for examples.   -->
 
-1. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
-
 ## Usage
 
 On release, automated continuous integration tests run the pipeline on a full-sized dataset on the AWS cloud infrastructure. This ensures that the pipeline runs on AWS, has sensible resource allocation defaults set to run on real-world datasets, and permits the persistent storage of results to benchmark between pipeline releases and other analysis sources. The results obtained from the full-sized test can be viewed on the [nf-core website](https://nf-co.re/spatialxe/results).
@@ -61,7 +59,7 @@ nextflow run nf-core/spatialxe \
 
 ## Run coordinate-based segmentation mode <br>
 
-`PROSEG -> BAYSOR -> XR-IMPORT_SEGMENTATION -> SPATIALDATA -> QC`
+`PROSEG -> PROSEG2BAYSOR -> XR-IMPORT_SEGMENTATION -> SPATIALDATA -> QC`
 
 ```bash
 nextflow run nf-core/spatialxe \
@@ -69,6 +67,30 @@ nextflow run nf-core/spatialxe \
    --input samplesheet.csv \
    --outdir <OUTDIR> \
    --mode coordinate
+```
+
+## Run segfree mode <br>
+
+`BAYSOR_SEGFREE`
+
+```bash
+nextflow run nf-core/spatialxe \
+   -profile <docker/singularity/.../institute> \
+   --input samplesheet.csv \
+   --outdir <OUTDIR> \
+   --mode segfree
+```
+
+## Run preview mode <br>
+
+`BAYSOR_PREVIEW`
+
+```bash
+nextflow run nf-core/spatialxe \
+   -profile <docker/singularity/.../institute> \
+   --input samplesheet.csv \
+   --outdir <OUTDIR> \
+   --mode preview
 ```
 
 > [!WARNING]

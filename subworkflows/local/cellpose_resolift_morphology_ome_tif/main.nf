@@ -10,27 +10,29 @@ workflow CELLPOSE_RESOLIFT_MORPHOLOGY_OME_TIF {
 
     take:
 
-    ch_image  // channel: [ val(meta), ["morphology.ome.tiff"] ]
-    ch_bundle // channel: [ val(meta), ["xenium-bundle"] ]
+    ch_morphology_image  // channel: [ val(meta), ["path-to-morphology.ome.tiff"] ]
+    ch_bundle_path       // channel: [ val(meta), ["path-to-xenium-bundle"] ]
 
     main:
 
     ch_versions = Channel.empty()
 
+    cellpose_model = params.cellpose_model ? (Channel.fromPath(params.cellpose_model, checkIfExists: true)) : []
+
     // sharpen morphology tiff if param - sharpen_tiff is true
     if ( params.sharpen_tiff ) {
 
-        RESOLIFT ( ch_image )
+        RESOLIFT ( ch_morphology_image )
         ch_versions = ch_versions.mix( RESOLIFT.out.versions )
 
         // run cellpose on the enhanced tiff
-        CELLPOSE ( RESOLIFT.out.enhanced_tiff, params.cellpose_model )
+        CELLPOSE ( RESOLIFT.out.enhanced_tiff, cellpose_model )
         ch_versions = ch_versions.mix( CELLPOSE.out.versions )
 
     } else {
 
         // run cellpose on the original tiff
-        CELLPOSE ( ch_image, params.cellpose_model )
+        CELLPOSE ( ch_morphology_image, cellpose_model )
         ch_versions = ch_versions.mix( CELLPOSE.out.versions )
     }
 
@@ -41,7 +43,7 @@ workflow CELLPOSE_RESOLIFT_MORPHOLOGY_OME_TIF {
     cellpose_mask = CELLPOSE.out.mask.map {
         _meta, mask -> return [ mask ]
     }
-    cellpose_flows = CELLPOSE.out.flows.map {
+    _cellpose_flows = CELLPOSE.out.flows.map {
         _meta, flows -> return [ flows ]
     }
 
@@ -49,7 +51,7 @@ workflow CELLPOSE_RESOLIFT_MORPHOLOGY_OME_TIF {
     if ( params.nucleus_segmentation_only ) {
 
         XENIUMRANGER_IMPORT_SEGMENTATION (
-            ch_bundle,
+            ch_bundle_path,
             [],
             cellpose_mask,
             [],
@@ -58,10 +60,11 @@ workflow CELLPOSE_RESOLIFT_MORPHOLOGY_OME_TIF {
             ""
         )
         ch_versions = ch_versions.mix( XENIUMRANGER_IMPORT_SEGMENTATION.out.versions )
+
     } else {
 
         XENIUMRANGER_IMPORT_SEGMENTATION (
-            ch_bundle,
+            ch_bundle_path,
             [],
             cellpose_mask,
             cellpose_cells,

@@ -53,6 +53,10 @@ process UNTAR {
     prefix = task.ext.prefix ?: (meta.id ? "${meta.id}" : archive.toString().replaceFirst(/\.[^\.]+(.gz)?$/, ""))
     """
     mkdir ${prefix}
+    touch ${prefix}/morphology.ome.tif
+    touch ${prefix}/transcripts.parquet
+    touch ${prefix}/gene_panel.json
+    
     ## Dry-run untaring the archive to get the files and place all in prefix
     if [[ \$(tar -taf ${archive} | grep -o -P "^.*?\\/" | uniq | wc -l) -eq 1 ]]; then
         for i in `tar -tf ${archive}`;

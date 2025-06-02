@@ -2,24 +2,31 @@
 // Run ficture preprocess and model modules
 //
 
-include { FICTURE_PREPROCESS               } from '../../../modules/local/ficture/preprocess/main'
-include { FICTURE                          } from '../../../modules/local/ficture/model/main'
-// include { XENIUMRANGER_IMPORT_SEGMENTATION } from '../../../modules/nf-core/xeniumranger/import-segmentation/main'
+include { FICTURE_PREPROCESS } from '../../../modules/local/ficture/preprocess/main'
+include { FICTURE            } from '../../../modules/local/ficture/model/main'
+include { PARQUET_TO_CSV     } from '../../../modules/local/spatialconverter/parquet_to_csv/main'
+
 
 workflow FICTURE_PREPROCESS_MODEL {
 
     take:
 
-    ch_transcripts // channel: [ val(meta), [ "transcripts.csv.gz" ] ]
-    ch_features    // channel: [ "features" ]
+    ch_transcripts_parquet // channel: [ val(meta), [ "transcripts.parquet" ] ]
+    ch_features            // channel: [ ["features"] ]
 
     main:
 
     ch_versions = Channel.empty()
 
+    // convert parquet to csv
+    PARQUET_TO_CSV ( ch_transcripts_parquet, ".csv" )
+    ch_versions = ch_versions.mix ( PARQUET_TO_CSV.out.versions )
+
     // run ficture preprocessing
+    ch_transcripts = PARQUET_TO_CSV.out.transcripts_csv
+
     FICTURE_PREPROCESS ( ch_transcripts, ch_features )
-    ch_versions = ch_versions.mix( FICTURE_PREPROCESS.out.versions )
+    ch_versions = ch_versions.mix ( FICTURE_PREPROCESS.out.versions )
 
     // run the ficture wrapper pipeline
     ch_features_clean = Channel.empty()
@@ -32,17 +39,6 @@ workflow FICTURE_PREPROCESS_MODEL {
         ch_features_clean
     )
     ch_versions = ch_versions.mix( FICTURE.out.versions )
-
-    // run xeniumranger import-segmentation
-    // XENIUMRANGER_IMPORT_SEGMENTATION (
-    //     ch_bundle,
-    //     [],
-    //     [],
-    //     [],
-    //     ch_segmentation,
-    //     BAYSOR_RUN.out.polygons2d,
-    //     "microns"
-    // )
 
     emit:
 

@@ -9,8 +9,8 @@ process SPATIALDATA_WRITE {
     val(outputfolder)
 
     output:
-    tuple val(meta), path("${outputfolder}")    , emit: spatialdata
-    path "versions.yml"                         , emit: versions
+    tuple val(meta), path("${outputfolder}"), emit: spatialdata
+    path("versions.yml")                    , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -26,9 +26,11 @@ process SPATIALDATA_WRITE {
     template 'write.py'
 
     stub:
+
+    def outdir = "${outputfolder}"
     """
-    mkdir -p "spatialdata/"
-    touch spatialdata/fake_file.txt
+    mkdir -p "${outdir}/"
+    touch "${outdir}/fake_file.txt"
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

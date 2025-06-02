@@ -2,35 +2,30 @@
 // Run baysor segfree
 //
 
-include { GUNZIP                               } from '../../../modules/nf-core/gunzip/main'
-include { BAYSOR_SEGFREE                       } from '../../../modules/local/baysor/segfree/main'
+include { BAYSOR_SEGFREE } from '../../../modules/local/baysor/segfree/main'
 
 
 workflow BAYSOR_GENERATE_SEGFREE {
 
     take:
 
-    ch_transcripts // channel: [ val(meta), ["transcripts.csv.gz"] ]
+    ch_transcripts_parquet // channel: [ val(meta), ["transcripts.parquet"] ]
+    ch_config              // channel: [ ["path-to-xenium.toml"] ]
 
     main:
 
     ch_versions = Channel.empty()
 
-    ch_ncvs     = Channel.empty()
-
-    // unzip transcripts.csv.gz
-    GUNZIP ( ch_transcripts )
-    ch_versions = ch_versions.mix ( GUNZIP.out.versions )
-
     // run baysor segfree
     BAYSOR_SEGFREE (
-        GUNZIP.out.gunzip
+        ch_transcripts_parquet,
+        ch_config
     )
-    ch_versions = ch_versions.mix( BAYSOR_SEGFREE.out.versions )
+    ch_versions = ch_versions.mix ( BAYSOR_SEGFREE.out.versions )
 
     emit:
 
-    ncvs     = ch_ncvs
+    ncvs     = BAYSOR_SEGFREE.out.ncvs // channel: [ val(meta), ["ncvs.loom"] ]
 
-    versions = ch_versions                    // channel: [ versions.yml ]
+    versions = ch_versions             // channel: [ versions.yml ]
 }

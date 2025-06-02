@@ -2,19 +2,17 @@
 // Run baysor run and import-segmentation
 //
 
-include { GUNZIP                               } from '../../../modules/nf-core/gunzip/main'
 include { BAYSOR_RUN as BAYSOR_RUN_TRANSCRIPTS } from '../../../modules/local/baysor/run/main'
 include { XENIUMRANGER_IMPORT_SEGMENTATION     } from '../../../modules/nf-core/xeniumranger/import-segmentation/main'
 
 
-workflow BAYSOR_RUN_TRANSCRIPTS_CSV {
+workflow BAYSOR_RUN_TRANSCRIPTS_PARQUET {
 
     take:
 
-    ch_bundle      // channel: [ val(meta), ["xenium-bundle"] ]
-    ch_transcripts // channel: [ val(meta), ["transcripts.csv.gz"] ]
-    ch_image       // channel: [ val(meta), ["morphology_focus.tiff"] ]
-    ch_config      // channel: ["path-to-xenium.toml"]
+    ch_bundle_path          // channel: [ val(meta), ["xenium-bundle"] ]
+    ch_transcripts_parquet  // channel: [ val(meta), ["transcripts.csv.parquet"] ]
+    ch_config               // channel: ["path-to-xenium.toml"]
 
     main:
 
@@ -25,18 +23,10 @@ workflow BAYSOR_RUN_TRANSCRIPTS_CSV {
     ch_htmls                = Channel.empty()
 
     ch_redefined_bundle     = Channel.empty()
-    ch_unzipped_transcripts = Channel.empty()
-
-
-    // unzip transcripts.csv.gz
-    GUNZIP ( ch_transcripts )
-    ch_versions = ch_versions.mix ( GUNZIP.out.versions )
-
-    ch_unzipped_transcripts = GUNZIP.out.gunzip
 
     // run baysor with transcripts.csv
     BAYSOR_RUN_TRANSCRIPTS (
-        ch_unzipped_transcripts,
+        ch_transcripts_parquet,
         [],
         ch_config,
         30
@@ -52,7 +42,7 @@ workflow BAYSOR_RUN_TRANSCRIPTS_CSV {
 
     // run xeniumranger import-segmentation
     XENIUMRANGER_IMPORT_SEGMENTATION (
-        ch_bundle,
+        ch_bundle_path,
         [],
         [],
         [],
