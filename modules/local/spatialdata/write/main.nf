@@ -7,6 +7,7 @@ process SPATIALDATA_WRITE {
     input:
     tuple val(meta), path(bundle, stageAs: "*")
     val(outputfolder)
+    val(segmented_object)
 
     output:
     tuple val(meta), path("${outputfolder}"), emit: spatialdata
