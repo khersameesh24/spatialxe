@@ -6,7 +6,8 @@ process CELLPOSE {
 
     input:
     tuple val(meta), path(image)
-    path(model)
+    val(model)
+    val(maskname)
 
     output:
     tuple val(meta), path("*masks.tif") ,   emit: mask
@@ -33,6 +34,7 @@ process CELLPOSE {
         --save_tif \\
         $model_command \\
         $args
+    mv *masks.tif morphology.ome_${maskname}_masks.tif
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
