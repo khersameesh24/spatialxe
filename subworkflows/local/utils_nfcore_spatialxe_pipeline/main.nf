@@ -195,13 +195,6 @@ def validateInputParameters() {
         log.warn "⚠️  Use --nucleus_segmentation_only to enable nucleus segmentation to redefine xenium bundle with import-segmentation module."
     }
 
-    if ( params.mode == 'image' && params.method == 'baysor' ) {
-        if ( !params.method_mask ) {
-            log.error "❌ Error: Missing path to segmentation mask. Image-based segmentation with the `baysor` method requires a segmentation mask with the `--segmentation_mask` option."
-            exit 1
-        }
-    }
-
 }
 
 //

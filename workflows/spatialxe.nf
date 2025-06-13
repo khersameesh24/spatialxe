@@ -241,12 +241,21 @@ workflow SPATIALXE {
             // run baysor run with morphology_ome.tif
             if ( params.method == 'baysor' ) {
 
-                BAYSOR_RUN_PRIOR_SEGMENTATION_MASK (
-                    ch_bundle_path,
-                    ch_transcripts_parquet,
-                    ch_segmentation_mask,
-                    ch_config
-                )
+                if ( params.segmentation_mask ) {
+                    BAYSOR_RUN_PRIOR_SEGMENTATION_MASK (
+                        ch_bundle_path,
+                        ch_transcripts_parquet,
+                        ch_segmentation_mask,
+                        ch_config
+                    )
+                } else {
+                    BAYSOR_RUN_PRIOR_SEGMENTATION_MASK (
+                        ch_bundle_path,
+                        ch_transcripts_parquet,
+                        [],
+                        ch_config
+                    )
+                }
                 ch_redefined_bundle = BAYSOR_RUN_PRIOR_SEGMENTATION_MASK.out.redefined_bundle
             }
 
@@ -343,9 +352,12 @@ workflow SPATIALXE {
     // run spatialdata modules to generate sd objects in image or coordinate mode
     if ( params.mode == 'image' || params.mode == 'coordinate' ) {
 
+        ch_segmented_object = Channel.value('cells_and_nuclei')
+
         SPATIALDATA_WRITE_META_MERGE (
             ch_bundle_path,
-            ch_redefined_bundle
+            ch_redefined_bundle,
+            ch_segmented_object
         )
 
     }

@@ -10,8 +10,9 @@ include { SPATIALDATA_META                                        } from '../../
 workflow SPATIALDATA_WRITE_META_MERGE {
 
     take:
-    ch_bundle_path      // channel: [ val(meta), [ "path-to-xenium-bundle" ] ]
-    ch_redefined_bundle // channel: [ val(meta), [ "redefined-xenium-bundle" ] ]
+    ch_bundle_path          // channel: [ val(meta), [ "path-to-xenium-bundle" ] ]
+    ch_redefined_bundle     // channel: [ val(meta), [ "redefined-xenium-bundle" ] ]
+    ch_segmented_object     // can be either cells,nuclei,cells_and_nuclei
 
     main:
 
@@ -20,7 +21,8 @@ workflow SPATIALDATA_WRITE_META_MERGE {
     // write spatialdata object from the raw xenium bundle
     SPATIALDATA_WRITE_RAW_BUNDLE (
         ch_bundle_path,
-        'spatialdata_raw'
+        'spatialdata_raw',
+        ch_segmented_object
     )
     ch_versions = ch_versions.mix ( SPATIALDATA_WRITE_RAW_BUNDLE.out.versions )
 
@@ -28,7 +30,8 @@ workflow SPATIALDATA_WRITE_META_MERGE {
     // write spatialdata object after running IMP_SEG
     SPATIALDATA_WRITE_REDEFINED_BUNDLE (
         ch_redefined_bundle,
-        'spatialdata_redefined'
+        'spatialdata_redefined',
+        ch_segmented_object
     )
     ch_versions = ch_versions.mix ( SPATIALDATA_WRITE_REDEFINED_BUNDLE.out.versions )
 
