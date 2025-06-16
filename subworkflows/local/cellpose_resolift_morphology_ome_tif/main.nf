@@ -28,7 +28,7 @@ workflow CELLPOSE_RESOLIFT_MORPHOLOGY_OME_TIF {
 
         // run cellpose on the enhanced tiff
         CELLPOSE_CELLS ( RESOLIFT.out.enhanced_tiff, cellpose_model, 'cells' )
-        ch_versions = ch_versions.mix( CELLPOSE.out.versions )
+        ch_versions = ch_versions.mix( CELLPOSE_CELLS.out.versions )
 
         CELLPOSE_NUCLEI ( RESOLIFT.out.enhanced_tiff, 'nuclei', 'nuclei' )
         ch_versions = ch_versions.mix( CELLPOSE_NUCLEI.out.versions )

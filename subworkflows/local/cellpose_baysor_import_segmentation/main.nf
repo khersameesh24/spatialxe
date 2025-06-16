@@ -20,7 +20,7 @@ workflow CELLPOSE_BAYSOR_IMPORT_SEGMENTATION {
     ch_versions = Channel.empty()
 
     // run cellpose to generate segmentation mask
-    CELLPOSE ( ch_morphology_image, [])
+    CELLPOSE ( ch_morphology_image, [], [])
     ch_versions = ch_versions.mix ( CELLPOSE.out.versions )
 
 

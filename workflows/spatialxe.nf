@@ -153,6 +153,14 @@ workflow SPATIALXE {
         )
     }
 
+    // get custom cellpose model if provided with the --cellpose_model for the cellpose method
+    if ( params.cellpose_model ) {
+        ch_features = Channel.fromPath (
+            params.cellpose_model,
+            checkIfExists: true
+        )
+    }
+
     // get gene_panel.json if provided with --gene_panel, sets relabel_genes to true
     if (( params.gene_panel )) {
 
