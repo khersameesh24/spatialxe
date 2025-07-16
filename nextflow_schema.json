@@ -175,6 +175,26 @@
                 "features": {
                     "type": "string",
                     "description": "List of features to be passed to the ficture method. (eg: TP53,OCIAD1,BCAS3,SOX)"
+                },
+                "min_qv": {
+                    "type": "number",
+                    "description": "minimum Q-Score to pass filtering (default: 20.0)"
+                },
+                "min_x": {
+                    "type": "number",
+                    "description": "only keep transcripts whose x-coordinate is greater than specified limit, if no limit is specified, the default minimum value will be 0.0"
+                },
+                "max_x": {
+                    "type": "number",
+                    "description": "only keep transcripts whose x-coordinate is less than specified limit, if no limit is specified, the default value will retain all transcripts since Xenium slide is <24000 microns in x and y (default: 24000.0)"
+                },
+                "min_y": {
+                    "type": "number",
+                    "description": "only keep transcripts whose y-coordinate is greater than specified limit, if no limit is specified, the default minimum value will be 0.0"
+                },
+                "max_y": {
+                    "type": "number",
+                    "description": "only keep transcripts whose y-coordinate is less than specified limit, if no limit is specified, the default value will retain all transcripts since Xenium slide is <24000 microns in x and y (default: 24000.0)"
                 }
             }
         },

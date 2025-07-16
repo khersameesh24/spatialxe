@@ -2,6 +2,7 @@
 // Run baysor run and import-segmentation
 //
 
+include { BAYSOR_PREPROCESS_TRANSCRIPTS        } from '../../../modules/local/baysor/preprocess/main'
 include { BAYSOR_RUN as BAYSOR_RUN_TRANSCRIPTS } from '../../../modules/local/baysor/run/main'
 include { XENIUMRANGER_IMPORT_SEGMENTATION     } from '../../../modules/nf-core/xeniumranger/import-segmentation/main'
 
@@ -18,15 +19,31 @@ workflow BAYSOR_RUN_TRANSCRIPTS_PARQUET {
 
     ch_versions             = Channel.empty()
 
+    ch_filtered_transcripts = Channel.empty()
+
     ch_segmentation         = Channel.empty()
     ch_polygons2d           = Channel.empty()
     ch_htmls                = Channel.empty()
 
     ch_redefined_bundle     = Channel.empty()
 
-    // run baysor with transcripts.csv
-    BAYSOR_RUN_TRANSCRIPTS (
+
+    // filter transcripts.parquet based on thresholds
+    BAYSOR_PREPROCESS_TRANSCRIPTS (
         ch_transcripts_parquet,
+        params.min_qv,
+        params.max_x,
+        params.min_x,
+        params.max_y,
+        params.min_y
+    )
+    ch_versions = ch_versions.mix ( BAYSOR_PREPROCESS_TRANSCRIPTS.out.versions )
+
+    ch_filtered_transcripts = BAYSOR_PREPROCESS_TRANSCRIPTS.out.transcripts_parquet
+
+    // run baysor with the filtered transcripts.parquet
+    BAYSOR_RUN_TRANSCRIPTS (
+        ch_filtered_transcripts,
         [],
         ch_config,
         30

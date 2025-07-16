@@ -6,6 +6,7 @@ include { RESOLIFT                         } from '../../../modules/local/resoli
 include { CELLPOSE as CELLPOSE_CELLS       } from '../../../modules/nf-core/cellpose/main'
 include { CELLPOSE as CELLPOSE_NUCLEI      } from '../../../modules/nf-core/cellpose/main'
 include { BAYSOR_RUN                       } from '../../../modules/local/baysor/run/main'
+include { BAYSOR_PREPROCESS_TRANSCRIPTS    } from '../../../modules/local/baysor/preprocess/main'
 include { XENIUMRANGER_IMPORT_SEGMENTATION } from '../../../modules/nf-core/xeniumranger/import-segmentation/main'
 
 workflow CELLPOSE_BAYSOR_IMPORT_SEGMENTATION {
@@ -23,6 +24,7 @@ workflow CELLPOSE_BAYSOR_IMPORT_SEGMENTATION {
     ch_image                 = Channel.empty()
     ch_polygons              = Channel.empty()
     ch_segmentation          = Channel.empty()
+    ch_filtered_transcripts  = Channel.empty()
     ch_cellpose_cells_mask   = Channel.empty()
     ch_cellpose_nuclei_mask  = Channel.empty()
     ch_cellpose_cells_cells  = Channel.empty()
@@ -78,23 +80,37 @@ workflow CELLPOSE_BAYSOR_IMPORT_SEGMENTATION {
     }
 
 
+    // filter transcripts.parquet based on thresholds
+    BAYSOR_PREPROCESS_TRANSCRIPTS (
+        ch_transcripts_parquet,
+        params.min_qv,
+        params.max_x,
+        params.min_x,
+        params.max_y,
+        params.min_y
+    )
+    ch_versions = ch_versions.mix ( BAYSOR_PREPROCESS_TRANSCRIPTS.out.versions )
+
+    ch_filtered_transcripts = BAYSOR_PREPROCESS_TRANSCRIPTS.out.transcripts_parquet
+
+
     // run baysor with cellpose results
     if ( params.nucleus_segmentation_only ) {
 
         // run baysor with nuclei mask
-        BAYSOR_RUN ( ch_transcripts_parquet, ch_cellpose_nuclei_mask, ch_config, 30 )
+        BAYSOR_RUN ( ch_filtered_transcripts, ch_cellpose_nuclei_mask, ch_config, 30 )
         ch_versions = ch_versions.mix ( BAYSOR_RUN.out.versions )
 
     } else if ( params.cell_segmentation_only ) {
 
         // run baysor with cell mask
-        BAYSOR_RUN ( ch_transcripts_parquet, ch_cellpose_cells_mask, ch_config, 30 )
+        BAYSOR_RUN ( ch_filtered_transcripts, ch_cellpose_cells_mask, ch_config, 30 )
         ch_versions = ch_versions.mix ( BAYSOR_RUN.out.versions )
 
     } else {
 
         // run baysor with cell mask
-        BAYSOR_RUN ( ch_transcripts_parquet, [], ch_config, 30 )
+        BAYSOR_RUN ( ch_filtered_transcripts, [], ch_config, 30 )
         ch_versions = ch_versions.mix ( BAYSOR_RUN.out.versions )
 
     }

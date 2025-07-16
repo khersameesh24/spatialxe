@@ -27,9 +27,13 @@ workflow SPATIALDATA_WRITE_META_MERGE {
 
         ch_segmented_object = Channel.value('cells')
 
-    } else {
+    } else if ( params.nucleus_segmentation_only && params.cell_segmentation_only ) {
 
         ch_segmented_object = Channel.value('cells_and_nuclei')
+
+    } else {
+
+        ch_segmented_object = Channel.value([])
 
     }
 
