@@ -95,6 +95,10 @@
                     "type": "boolean",
                     "description": "Whether to run vanilla xeniumranger workflow."
                 },
+                "cell_segmentation_only": {
+                    "type": "boolean",
+                    "description": "Whether to only run nucleus segmentation."
+                },
                 "nucleus_segmentation_only": {
                     "type": "boolean",
                     "description": "Whether to only run nucleus segmentation."
