@@ -12,11 +12,26 @@ workflow SPATIALDATA_WRITE_META_MERGE {
     take:
     ch_bundle_path          // channel: [ val(meta), [ "path-to-xenium-bundle" ] ]
     ch_redefined_bundle     // channel: [ val(meta), [ "redefined-xenium-bundle" ] ]
-    ch_segmented_object     // can be either cells,nuclei,cells_and_nuclei
 
     main:
 
     ch_versions = Channel.empty()
+    ch_segmented_object = Channel.empty()
+
+    // check what is being segmented - only nuclei or both cells & nuclei
+    if ( params.nucleus_segmentation_only ) {
+
+        ch_segmented_object = Channel.value('nuclei')
+
+    } else if ( params.cell_segmentation_only ) {
+
+        ch_segmented_object = Channel.value('cells')
+
+    } else {
+
+        ch_segmented_object = Channel.value('cells_and_nuclei')
+
+    }
 
     // write spatialdata object from the raw xenium bundle
     SPATIALDATA_WRITE_RAW_BUNDLE (

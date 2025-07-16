@@ -360,16 +360,12 @@ workflow SPATIALXE {
     // run spatialdata modules to generate sd objects in image or coordinate mode
     if ( params.mode == 'image' || params.mode == 'coordinate' ) {
 
-        ch_segmented_object = Channel.value('cells_and_nuclei')
-
         SPATIALDATA_WRITE_META_MERGE (
             ch_bundle_path,
-            ch_redefined_bundle,
-            ch_segmented_object
+            ch_redefined_bundle
         )
 
     }
-
 
     /*
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
