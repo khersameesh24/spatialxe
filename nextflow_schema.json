@@ -195,6 +195,14 @@
                 "max_y": {
                     "type": "number",
                     "description": "only keep transcripts whose y-coordinate is less than specified limit, if no limit is specified, the default value will retain all transcripts since Xenium slide is <24000 microns in x and y (default: 24000.0)"
+                },
+                "csplit_x_bins": {
+                    "type": "integer",
+                    "description": "number of slices along the x axis (default - 10)"
+                },
+                "csplit_y_bins": {
+                    "type": "integer",
+                    "description": "number of slices along the y axis (default - 10)"
                 }
             }
         },
