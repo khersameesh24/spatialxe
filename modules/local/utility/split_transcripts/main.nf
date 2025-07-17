@@ -1,4 +1,4 @@
-process BAYSOR_PREPROCESS_TRANSCRIPTS {
+process SPLIT_TRANSCRIPTS {
     tag "$meta.id"
     label 'process_low'
 
@@ -6,32 +6,29 @@ process BAYSOR_PREPROCESS_TRANSCRIPTS {
 
     input:
     tuple val(meta), path(transcripts)
-    val(min_qv)
-    val(max_x)
-    val(min_x)
-    val(max_y)
-    val(min_y)
+    val(x_bins)
+    val(y_bins)
 
     output:
-    tuple val(meta), path("*.parquet"), emit: transcripts_parquet
-    path("versions.yml")              , emit: versions
+    tuple val(meta), path("splits.csv"), emit: splits_csv
+    path("versions.yml")               , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
     if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
-        error "PREPROCESS_TRANSCRIPTS module does not support Conda. Please use Docker / Singularity / Podman instead."
+        error "SPLIT_TRANSCRIPTS module does not support Conda. Please use Docker / Singularity / Podman instead."
     }
 
-    template 'preprocess_transcripts.py'
+    template 'split_transcripts.py'
 
     stub:
     """
     touch ${transcripts}.parquet
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        baysor_preprocess_transcripts: "1.0.0"
+        baysor_split_parquet: "1.0.0"
     END_VERSIONS
     """
 }
