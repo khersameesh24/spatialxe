@@ -38,16 +38,22 @@ def make_tiles(df: pd.DataFrame, x_bins: int, y_bins: int) -> pd.DataFrame:
     return pd.DataFrame(tiles)
 
 
+def generate_version_yml() -> None:
+    with open("versions.yml", "w") as yml:
+        yml.write('"${task.process}":\\n')
+        yml.write("Baysor-Split Transcripts: 1.0.0'\\n")
+
+    return None
+
+
 def main(
     transcripts: str,
     x_bins: int = 10,
     y_bins: int = 10
 ) -> None:
     """
-    Generate split
+    Generate splits
     """
-
-
     # read parquet file
     df = pd.read_parquet(transcripts, engine='fastparquet')
 
@@ -56,6 +62,9 @@ def main(
 
     # save parquet file
     tiles_df.to_csv("splits.csv", index=False)
+
+    # generate version yml
+    generate_version_yml()
 
     return None
 

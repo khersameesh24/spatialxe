@@ -195,6 +195,12 @@ def validateInputParameters() {
         log.warn "⚠️  Use --nucleus_segmentation_only to enable nucleus segmentation to redefine xenium bundle with import-segmentation module."
     }
 
+    // check if segmentation mask is provided in image mode and baysor method
+    if ( params.mode == 'image' && params.method == 'baysor' )
+        if (!params.segmentation_mask ) {
+        log.error "❌  Error: Missing segmentation mask with `--segmentation_mask` when pipeline is run in ${params.mode} and with the ${params.method}."
+    }
+
 }
 
 //
