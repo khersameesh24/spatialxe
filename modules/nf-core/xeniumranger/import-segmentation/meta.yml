@@ -62,22 +62,22 @@ input:
         description: |
           Cell boundary polygons (GeoJSON) for visualization from Baysor v0.6. Required if --transcript-assignment argument used. Error if --cells or --nuclei arguments used.
 output:
-  - bundle:
+  - outs:
       - meta:
-        type: map
-        description: |
-          Groovy Map containing sample information
-          e.g. [ id:'sample' ]
-      - "${meta.id}/outs":
-        type: file
-        description: Files containing the outputs of xenium ranger, see official 10X
-          Genomics documentation for a complete list of outputs
-        pattern: "${meta.id}/outs"
+          type: file
+          description: Files containing the outputs of Cell Ranger, see official 10X Genomics
+            documentation for a complete list
+          pattern: "${meta.id}/outs/*"
+      - "**/outs/**":
+          type: file
+          description: Files containing the outputs of xenium ranger, see official 10X
+            Genomics documentation for a complete list of outputs
+          pattern: "${meta.id}/outs/*"
   - versions:
       - versions.yml:
-        type: file
-        description: File containing software versions
-        pattern: "versions.yml"
+          type: file
+          description: File containing software versions
+          pattern: "versions.yml"
 authors:
   - "@khersameesh24"
 maintainers:
